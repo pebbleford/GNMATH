@@ -38,6 +38,28 @@ docker-compose up</code></pre>
 cargo run --release   # needs Rust 1.63 or newer, listens on port 30000</code></pre>
   <p>Then point your Postgres client at the proxy's port instead of the database's own port.</p>
 
+  <h2>Run it on Oracle Cloud</h2>
+  <p>Oracle's free tier includes Arm VMs (Ampere A1), which are enough for this. Check Oracle's current free-tier limits first. These steps are untested.</p>
+  <ol>
+    <li>In the OCI console, create a compute instance: Ubuntu, an Ampere A1 shape (1 OCPU and 6 GB is plenty), a public IP, and your SSH key.</li>
+    <li>SSH in and install the tools:
+      <pre><code>sudo apt update &amp;&amp; sudo apt install -y build-essential git
+curl https://sh.rustup.rs -sSf | sh &amp;&amp; . "$HOME/.cargo/env"</code></pre></li>
+    <li>Get the code and build it (the first build can take 10 to 30 minutes):
+      <pre><code>git clone https://github.com/pebbleford/gnmath.git
+cd gnmath/fern-proxy
+cargo run --release</code></pre></li>
+    <li>Open port 30000 in <strong>two</strong> places:
+      <ul>
+        <li>In the VCN Security List (or a Network Security Group), add an ingress rule for TCP 30000. Set the source to your app's IP, not <code>0.0.0.0/0</code>.</li>
+        <li>On the VM, Oracle's Ubuntu images block ports with iptables:
+          <pre><code>sudo iptables -I INPUT -p tcp --dport 30000 -j ACCEPT
+sudo netfilter-persistent save</code></pre></li>
+      </ul></li>
+    <li>Point your app's connection string at <code>&lt;vm-ip&gt;:30000</code>.</li>
+  </ol>
+  <p class="note">Fern proxy has no TLS yet. Keep the proxy and your database in the same VCN and use private IPs between them, or use a VPN or SSH tunnel. Don't expose port 30000 to the internet.</p>
+
   <h2>Choose what gets masked</h2>
   <p>Edit <code>fern-proxy/examples/config.toml</code>:</p>
   <pre><code>[masking]
