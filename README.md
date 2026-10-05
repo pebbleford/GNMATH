@@ -20,6 +20,8 @@ Games in `CONFIG.localGames` (see `assets/app.js`) ship with the site and load f
 
 - **Fern Proxy** (`games/fern-proxy.html`): a small arcade game inspired by [fern-proxy](https://github.com/fern-proxy/fern-proxy). Mask sensitive fields in query results before they reach the app.
 
+The real [fern-proxy](https://github.com/fern-proxy/fern-proxy) source (commit `788d27e`, Apache-2.0, license included) is embedded in [`fern-proxy/`](fern-proxy/). It is a Rust PostgreSQL proxy, so it can't run in the browser; the game above is the playable part.
+
 ## Run it locally
 
 Any static file server works:

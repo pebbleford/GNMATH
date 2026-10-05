@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText:  Copyright © 2022 The Fern Authors <team@fernproxy.io>
+# SPDX-License-Identifier: Apache-2.0
+
+.circleci
+.coverage
+.env
+.git
+.github
+.gitignore
+doc
+examples
+target
+*.md
+*.profraw
+*.yml
+Dockerfile
+LICENSE
+Makefile
