@@ -20,10 +20,7 @@
       'https://raw.githubusercontent.com/gn-math/html/main',
     ],
     // Games bundled with this site (relative URLs, no catalog needed).
-    localGames: [
-      { id: 900001, name: 'Fern Proxy', author: 'Fern Proxy', special: ['tools'], featured: true,
-        url: 'games/fern-proxy.html', cover: '', local: true },
-    ],
+    localGames: [],
     recentLimit: 16,
     connectTimeout: 15000,
   };

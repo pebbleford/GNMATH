@@ -14,13 +14,9 @@ It's a static site with no build step and no backend. It reads gn-math's live ca
 - **Player**: restart, fullscreen, open in a new tab and favorite controls. Every game has a shareable link (`/#/play/<id>`).
 - **Fallbacks**: every asset has a backup source (jsDelivr ⇄ raw GitHub), and the catalog is cached so the site still lists games if the catalog can't be reached.
 
-## Bundled games
+## Fern Proxy
 
-Games in `CONFIG.localGames` (see `assets/app.js`) ship with the site and load from this repo:
-
-- **Fern Proxy** (`games/fern-proxy.html`): a small arcade game inspired by [fern-proxy](https://github.com/fern-proxy/fern-proxy). Mask sensitive fields in query results before they reach the app.
-
-The real [fern-proxy](https://github.com/fern-proxy/fern-proxy) source (commit `788d27e`, Apache-2.0, license included) is embedded in [`fern-proxy/`](fern-proxy/). It is a Rust PostgreSQL proxy, so it can't run in the browser; the game above is the playable part.
+The real [fern-proxy](https://github.com/fern-proxy/fern-proxy) source (commit `788d27e`, Apache-2.0, license included) is embedded in [`fern-proxy/`](fern-proxy/). It is a Rust PostgreSQL proxy, so it can't run in the browser. See [`fern-proxy.html`](fern-proxy.html) for setup steps.
 
 ## Run it locally
 
