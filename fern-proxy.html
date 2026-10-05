@@ -35,7 +35,7 @@ docker-compose up</code></pre>
 
   <h2>Run it (Rust, no Docker)</h2>
   <pre><code>cd fern-proxy
-make run     # release build; see `make help` for everything else</code></pre>
+cargo run --release   # needs Rust 1.63 or newer, listens on port 30000</code></pre>
   <p>Then point your Postgres client at the proxy's port instead of the database's own port.</p>
 
   <h2>Choose what gets masked</h2>
