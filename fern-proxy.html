@@ -60,6 +60,11 @@ sudo netfilter-persistent save</code></pre></li>
   </ol>
   <p class="note">Fern proxy has no TLS yet. Keep the proxy and your database in the same VCN and use private IPs between them, or use a VPN or SSH tunnel. Don't expose port 30000 to the internet.</p>
 
+  <h3>Shortcut: one command</h3>
+  <p>On the VM, this script does steps 2 to 4 and the VM firewall part of step 5. Read <a href="scripts/setup-fern-proxy.sh">the script</a> before running it. You still add the console ingress rule yourself.</p>
+  <pre><code>curl -sSLO https://raw.githubusercontent.com/pebbleford/gnmath/main/scripts/setup-fern-proxy.sh
+SERVER=&lt;db-host&gt;:5432 bash setup-fern-proxy.sh   # add SITE=1 to also host this site</code></pre>
+
   <h2>Choose what gets masked</h2>
   <p>Edit <code>fern-proxy/examples/config.toml</code>:</p>
   <pre><code>[masking]
