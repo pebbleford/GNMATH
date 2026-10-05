@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GNMATH</title>
+  <meta name="description" content="Hundreds of free browser games: ports, Flash classics, emulators and more, powered by the gn-math library.">
+  <meta name="theme-color" content="#0a0d12">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#library">Skip to games</a>
+
+  <header class="topbar">
+    <div class="topbar__inner wrap">
+      <a class="brand" href="#" aria-label="GNMATH home">
+        <span class="brand__mark" aria-hidden="true">∑</span>
+        <span class="brand__name" data-site-name>GNMATH</span>
+      </a>
+
+      <label class="search" for="search">
+        <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="sr-only">Search games</span>
+        <input id="search" type="search" placeholder="Search games" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        <kbd class="search__hint" aria-hidden="true">/</kbd>
+      </label>
+
+      <button class="btn btn--accent" id="random" type="button" title="Play a random game">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" class="fill"/><circle cx="15.5" cy="15.5" r="1.4" class="fill"/><circle cx="15.5" cy="8.5" r="1.4" class="fill"/><circle cx="8.5" cy="15.5" r="1.4" class="fill"/></svg>
+        <span>Random</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="library" class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">Pick a game. Any game.</h1>
+      <p class="hero__sub"><span class="mono" id="hero-count">—</span> games, in your browser. No downloads, no installs.</p>
+    </section>
+
+    <section class="shelf" id="shelf-recent" hidden aria-labelledby="shelf-recent-title">
+      <div class="shelf__head">
+        <h2 id="shelf-recent-title">Continue playing</h2>
+        <button class="link-btn" type="button" id="clear-recent">Clear</button>
+      </div>
+      <div class="shelf__row" id="recent-row"></div>
+    </section>
+
+    <section class="shelf" id="shelf-featured" hidden aria-labelledby="shelf-featured-title">
+      <div class="shelf__head">
+        <h2 id="shelf-featured-title">Featured</h2>
+        <button class="link-btn" type="button" data-jump="featured">See all</button>
+      </div>
+      <div class="shelf__row" id="featured-row"></div>
+    </section>
+
+    <section class="browse" aria-labelledby="browse-title">
+      <div class="browse__head">
+        <h2 id="browse-title">All games</h2>
+        <div class="browse__tools">
+          <span class="count mono" id="result-count" aria-live="polite"></span>
+          <label class="select">
+            <span class="sr-only">Sort games</span>
+            <select id="sort">
+              <option value="new">Newest</option>
+              <option value="old">Oldest</option>
+              <option value="az">A–Z</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <nav class="chips" id="chips" aria-label="Categories"></nav>
+
+      <div class="grid" id="grid" aria-busy="true"></div>
+
+      <div class="state" id="state" hidden></div>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <p>Game library from <a href="https://github.com/gn-math" target="_blank" rel="noopener">gn-math</a>. Every game belongs to its original creators, credited on each game.</p>
+    <p class="mono footer__meta" id="source-meta"></p>
+  </footer>
+
+  <!-- Player -->
+  <div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="player-title">
+    <div class="player__bar">
+      <button class="icon-btn" type="button" id="player-back" title="Back to games">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+        <span class="sr-only">Back to games</span>
+      </button>
+      <div class="player__info">
+        <h2 id="player-title">Loading…</h2>
+        <a id="player-author" target="_blank" rel="noopener"></a>
+      </div>
+      <div class="player__actions">
+        <button class="icon-btn" type="button" id="player-fav" title="Add to favorites" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>
+          <span class="sr-only">Favorite</span>
+        </button>
+        <button class="icon-btn" type="button" id="player-reload" title="Restart game">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+          <span class="sr-only">Restart game</span>
+        </button>
+        <button class="icon-btn" type="button" id="player-popout" title="Open in a new tab">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+          <span class="sr-only">Open in a new tab</span>
+        </button>
+        <button class="icon-btn icon-btn--accent" type="button" id="player-full" title="Fullscreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <span class="sr-only">Fullscreen</span>
+        </button>
+      </div>
+    </div>
+    <div class="player__stage" id="player-stage">
+      <div class="player__msg" id="player-msg" hidden></div>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
