@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fern Proxy · GNMATH</title>
+<link rel="icon" href="assets/favicon.svg">
+<style>
+  :root { --bg:#0a0d12; --surface:#151b25; --line:#232d3b; --text:#e8edf4; --dim:#9aa6b6; --accent:#6cf0b0; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.6 system-ui,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--accent); } h1 span { color:var(--accent); }
+  pre { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px; overflow:auto; font-size:14px; }
+  code { font-family:ui-monospace,Menlo,monospace; }
+  .note { border-left:3px solid var(--accent); padding:4px 14px; background:var(--surface); border-radius:0 8px 8px 0; color:var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./">&larr; Back to GNMATH</a></p>
+  <h1>Fern <span>Proxy</span></h1>
+  <p><a href="games/fern-proxy.html">Play the game</a> &middot; <a href="fern-proxy/">Source in this repo</a></p>
+
+  <p class="note"><strong>What it is:</strong> Fern proxy is a <em>PostgreSQL</em> proxy. It sits between an app and a database and masks sensitive columns in query results. It is not a web proxy, so it can't unblock websites or games. It also needs a server or Docker, so it can't run on GitHub Pages.</p>
+
+  <h2>Run it (Docker)</h2>
+  <p>This starts a Postgres database, Fern proxy in front of it, and a <code>psql</code> client.</p>
+  <pre><code>git clone https://github.com/pebbleford/gnmath.git
+cd gnmath/fern-proxy/examples
+docker-compose up</code></pre>
+  <p>In a second terminal, connect <strong>through the proxy</strong> (port 30000, TLS is not supported yet):</p>
+  <pre><code>docker exec -it postgres-client psql \
+  'postgresql://root:testpassword@fern-proxy:30000/testdb?sslmode=disable'</code></pre>
+  <p>Run a query such as <code>\dS+;</code>. The columns Owner, Name and Access method come back as <code>****</code>.</p>
+
+  <h2>Run it (Rust, no Docker)</h2>
+  <pre><code>cd fern-proxy
+make run     # release build; see `make help` for everything else</code></pre>
+  <p>Then point your Postgres client at the proxy's port instead of the database's own port.</p>
+
+  <h2>Choose what gets masked</h2>
+  <p>Edit <code>fern-proxy/examples/config.toml</code>:</p>
+  <pre><code>[masking]
+strategy = 'caviar-preserve-shape'   # or 'caviar' (fixed length)
+
+[masking.exclude]
+columns = ['*']                      # leave everything alone...
+
+[masking.force]
+columns = ['email', 'ssn', 'card']   # ...except these</code></pre>
+
+  <h2>Use it with your own app</h2>
+  <ol>
+    <li>Run your Postgres server as usual.</li>
+    <li>Run Fern proxy and configure it to forward to that server.</li>
+    <li>Change your app's connection string to the proxy's host and port.</li>
+  </ol>
+  <p class="note">The upstream project says it is not ready for production. Use it for demos and experiments.</p>
+</main>
+</body>
+</html>
