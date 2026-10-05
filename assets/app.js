@@ -19,6 +19,11 @@
       'https://cdn.jsdelivr.net/gh/gn-math/html@main',
       'https://raw.githubusercontent.com/gn-math/html/main',
     ],
+    // Games bundled with this site (relative URLs, no catalog needed).
+    localGames: [
+      { id: 900001, name: 'Fern Proxy', author: 'Fern Proxy', special: ['tools'], featured: true,
+        url: 'games/fern-proxy.html', cover: '', local: true },
+    ],
     recentLimit: 16,
     connectTimeout: 15000,
   };
@@ -166,13 +171,13 @@
   function ingest(raw) {
     if (!Array.isArray(raw)) throw new Error('Unexpected catalog format');
     const games = [];
-    raw.forEach((z) => {
+    [...raw, ...CONFIG.localGames].forEach((z) => {
       if (!z || typeof z.id !== 'number' || z.id < 0 || !z.url || !z.name) return;
       const name = String(z.name).trim();
       // "[!] ..." entries are gn-math's own notices (suggestion box, comments).
       if (name.startsWith('[!]')) return;
       const url = String(z.url);
-      const external = !url.includes('{HTML_URL}');
+      const external = !z.local && !url.includes('{HTML_URL}');
       if (external && !/^https?:\/\//.test(url)) return;
       const author = z.author ? String(z.author).trim() : '';
       const tags = Array.isArray(z.special) ? z.special.map(String) : [];

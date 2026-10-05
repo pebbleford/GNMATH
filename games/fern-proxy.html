@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fern Proxy</title>
+<style>
+  :root { --bg:#0f1a14; --card:#17271e; --line:#2a4435; --fg:#e6f4ea; --dim:#8fb09b; --ok:#5ee08a; --bad:#ff6b6b; --warn:#f5c451; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:15px/1.4 system-ui, sans-serif; }
+  #app { max-width:760px; margin:0 auto; padding:14px; height:100%; display:flex; flex-direction:column; gap:10px; }
+  header { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  h1 { margin:0; font-size:20px; } h1 span { color:var(--ok); }
+  .stats { display:flex; gap:14px; font-variant-numeric:tabular-nums; }
+  .stats b { color:var(--ok); }
+  #lanes { flex:1; min-height:0; display:flex; flex-direction:column; gap:8px; overflow:hidden; }
+  .row { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px; position:relative; overflow:hidden; }
+  .row .bar { position:absolute; left:0; bottom:0; height:3px; background:var(--warn); }
+  .cells { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:6px; }
+  .cell { background:#0d1712; border:1px solid var(--line); color:var(--fg); border-radius:8px; padding:6px 8px; text-align:left; cursor:pointer; font:inherit; }
+  .cell small { display:block; color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .cell:hover { border-color:var(--ok); }
+  .cell.masked { background:#12301f; border-color:var(--ok); color:var(--ok); }
+  .row.flash-bad { border-color:var(--bad); } .row.flash-good { border-color:var(--ok); }
+  footer { color:var(--dim); font-size:13px; text-align:center; }
+  #overlay { position:fixed; inset:0; background:rgba(8,14,10,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:20px; }
+  #overlay[hidden] { display:none; }
+  #overlay p { max-width:440px; color:var(--dim); margin:0; }
+  button.go { background:var(--ok); color:#06210f; border:0; border-radius:10px; padding:10px 22px; font:600 16px system-ui; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Fern <span>Proxy</span></h1>
+    <div class="stats"><div>Score <b id="score">0</b></div><div>Best <b id="best">0</b></div><div>Leaks <b id="lives">3</b>/3</div></div>
+  </header>
+  <div id="lanes" aria-live="polite"></div>
+  <footer>Query results are heading to the app. Click every sensitive field to mask it before the row leaves. Don't mask harmless ones.</footer>
+</div>
+<div id="overlay">
+  <h1>Fern <span>Proxy</span></h1>
+  <p id="msg">You are the proxy between the app and the database. Mask <b>names, emails, SSNs and card numbers</b> in each row before time runs out. Leave IDs, cities and order totals alone.</p>
+  <button class="go" id="start">Start</button>
+</div>
+<script>
+(() => {
+  const FIELDS = {
+    id:    { label:'id',    sens:false, gen:() => 1000 + Math.floor(Math.random()*9000) },
+    city:  { label:'city',  sens:false, gen:() => pick(['Oslo','Lima','Kyoto','Austin','Cork','Pune','Turin']) },
+    total: { label:'total', sens:false, gen:() => '$' + (Math.random()*400+5).toFixed(2) },
+    name:  { label:'name',  sens:true,  gen:() => pick(['Ada Park','Leo Marsh','Ines Roca','Kofi Mensah','Yuki Sato','Maya Cole']) },
+    email: { label:'email', sens:true,  gen:() => pick(['ada','leo','ines','kofi','yuki','maya']) + Math.floor(Math.random()*99) + '@mail.io' },
+    ssn:   { label:'ssn',   sens:true,  gen:() => `${rnd(100,899)}-${rnd(10,99)}-${rnd(1000,9999)}` },
+    card:  { label:'card',  sens:true,  gen:() => `4${rnd(100,999)} ${rnd(1000,9999)} ${rnd(1000,9999)} ${rnd(1000,9999)}` },
+  };
+  const SAFE = ['id','city','total'], SENS = ['name','email','ssn','card'];
+  const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+  const pick = (a) => a[Math.floor(Math.random()*a.length)];
+  const $ = (id) => document.getElementById(id);
+  const lanes = $('lanes');
+  let score, lives, running, timer, best = +(localStorage.getItem('fernproxy:best') || 0), spawned, rows;
+  $('best').textContent = best;
+
+  const mask = (key, v) => key === 'email' ? v.replace(/^.*@/, '****@') : String(v).replace(/[0-9A-Za-z]/g, '*');
+
+  function spawnRow() {
+    const keys = [...SAFE.slice().sort(() => Math.random()-.5).slice(0, rnd(1,2)),
+                  ...SENS.slice().sort(() => Math.random()-.5).slice(0, rnd(1,3))].sort(() => Math.random()-.5);
+    const ttl = Math.max(3200, 8000 - spawned * 120);
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<div class="cells"></div><div class="bar" style="width:100%"></div>';
+    const cells = row.firstChild;
+    const state = { keys, masked: new Set(), done:false };
+    keys.forEach((k) => {
+      const f = FIELDS[k], value = f.gen();
+      const b = document.createElement('button');
+      b.className = 'cell'; b.type = 'button';
+      b.innerHTML = `<small>${f.label}</small><span></span>`;
+      b.lastChild.textContent = value;
+      b.onclick = () => {
+        if (state.done || state.masked.has(k)) return;
+        state.masked.add(k); b.classList.add('masked'); b.lastChild.textContent = mask(k, value);
+        if (!f.sens) { score = Math.max(0, score - 5); row.classList.add('flash-bad'); setTimeout(() => row.classList.remove('flash-bad'), 250); update(); }
+      };
+      cells.appendChild(b);
+    });
+    state.start = performance.now(); state.ttl = ttl; state.el = row;
+    rows.push(state); spawned++;
+    lanes.prepend(row);
+    while (lanes.children.length > 5) lanes.lastChild.remove();
+  }
+
+  function finish(s) {
+    s.done = true;
+    const leaked = s.keys.filter((k) => FIELDS[k].sens && !s.masked.has(k)).length;
+    const row = s.el;
+    if (leaked) { lives--; row.classList.add('flash-bad'); }
+    else { score += 10 + s.keys.filter((k) => FIELDS[k].sens).length * 5; row.classList.add('flash-good'); }
+    row.style.opacity = '.45';
+    update();
+    if (lives <= 0) end();
+  }
+
+  function tick() {
+    const now = performance.now();
+    rows.forEach((s) => {
+      if (s.done) return;
+      const left = 1 - (now - s.start) / s.ttl;
+      s.el.querySelector('.bar').style.width = Math.max(0, left * 100) + '%';
+      const allDone = s.keys.every((k) => !FIELDS[k].sens || s.masked.has(k));
+      if (left <= 0 || allDone && left < 0.9) finish(s);
+    });
+  }
+
+  function update() { $('score').textContent = score; $('lives').textContent = Math.max(0, lives); }
+
+  function end() {
+    running = false; clearInterval(timer); clearTimeout(spawnT);
+    if (score > best) { best = score; try { localStorage.setItem('fernproxy:best', best); } catch {} $('best').textContent = best; }
+    $('msg').innerHTML = `Data leaked. Final score <b>${score}</b> (best ${best}).`;
+    $('start').textContent = 'Play again';
+    $('overlay').hidden = false;
+  }
+
+  let spawnT;
+  function loop() {
+    if (!running) return;
+    spawnRow();
+    spawnT = setTimeout(loop, Math.max(1100, 2800 - spawned * 50));
+  }
+
+  $('start').onclick = () => {
+    score = 0; lives = 3; spawned = 0; rows = []; running = true;
+    lanes.replaceChildren(); update();
+    $('overlay').hidden = true;
+    clearInterval(timer); timer = setInterval(tick, 60);
+    loop();
+  };
+})();
+</script>
+</body>
+</html>
