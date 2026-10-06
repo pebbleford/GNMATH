@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GNMATH</title>
+  <meta name="description" content="Hundreds of free browser games: ports, Flash classics, emulators and more, powered by the gn-math library.">
+  <meta name="theme-color" content="#0a0d12">
+  
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+:root {
+  --bg: #0a0d12;
+  --bg-raise: #11161e;
+  --surface: #151b25;
+  --surface-hi: #1c2431;
+  --line: #232d3b;
+  --line-soft: rgba(255, 255, 255, 0.045);
+  --text: #e8edf4;
+  --text-dim: #9aa6b6;
+  --text-faint: #6b7788;
+  --accent: #6cf0b0;
+  --accent-ink: #052618;
+  --accent-soft: rgba(108, 240, 176, 0.14);
+  --star: #ffd166;
+  --danger: #ff7a7a;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --gutter: 16px;
+  --font: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 88px; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg);
+  /* graph paper */
+  background-image:
+    radial-gradient(1200px 500px at 85% -120px, rgba(108, 240, 176, 0.09), transparent 70%),
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.is-playing { overflow: hidden; }
+
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+img { display: block; max-width: 100%; }
+svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+svg .fill { fill: currentColor; stroke: none; }
+[hidden] { display: none !important; }
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip {
+  position: absolute; left: 12px; top: -48px; z-index: 100;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none;
+}
+.skip:focus { top: 12px; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wrap { width: 100%; max-width: 1360px; margin: 0 auto; padding: 0 var(--gutter); }
+@media (min-width: 720px) { :root { --gutter: 28px; } }
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(10, 13, 18, 0.82);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar__inner { display: flex; align-items: center; gap: 12px; height: 64px; }
+
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: none; }
+.brand__mark {
+  display: grid; place-items: center;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--accent); color: var(--accent-ink);
+  font: 700 22px/1 var(--mono);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 6px 20px -6px rgba(108, 240, 176, .6);
+}
+.brand__name { font-weight: 700; font-size: 19px; letter-spacing: .04em; }
+
+.search {
+  position: relative; flex: 1; max-width: 560px; margin-left: auto;
+  display: flex; align-items: center;
+}
+.search__icon { position: absolute; left: 13px; color: var(--text-faint); pointer-events: none; }
+.search input {
+  width: 100%; height: 42px; padding: 0 40px 0 42px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  outline: none; transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.search input::placeholder { color: var(--text-faint); }
+.search input:focus { border-color: var(--accent); background: var(--bg-raise); box-shadow: 0 0 0 4px var(--accent-soft); }
+.search input::-webkit-search-cancel-button { filter: invert(.6); cursor: pointer; }
+.search__hint {
+  position: absolute; right: 10px; padding: 1px 7px;
+  font: 500 12px/18px var(--mono); color: var(--text-faint);
+  border: 1px solid var(--line); border-radius: 6px; pointer-events: none;
+}
+.search input:focus ~ .search__hint, .search input:not(:placeholder-shown) ~ .search__hint { display: none; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; flex: none;
+  height: 42px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface); font-weight: 600; cursor: pointer;
+  transition: transform .12s var(--ease), background .15s, border-color .15s;
+}
+.btn:hover { background: var(--surface-hi); }
+.btn:active { transform: scale(.97); }
+.btn--accent { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+.btn--accent:hover { background: #8af5c3; }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+@media (max-width: 640px) {
+  .brand__name { display: none; }
+  .search__hint { display: none; }
+  .btn span { display: none; }
+  .btn { width: 42px; padding: 0; justify-content: center; }
+}
+
+/* ---------- Hero ---------- */
+.hero { padding: 40px 0 8px; }
+.hero h1 {
+  margin: 0; font-size: clamp(30px, 5.2vw, 52px); line-height: 1.05; letter-spacing: -.025em; font-weight: 700;
+  text-wrap: balance;
+}
+.hero__sub { margin: 10px 0 0; color: var(--text-dim); font-size: clamp(15px, 1.6vw, 17px); }
+.hero__sub .mono { color: var(--accent); font-weight: 700; }
+.is-filtering .hero { display: none; }
+
+/* ---------- Shelves ---------- */
+.shelf { margin-top: 32px; }
+.is-filtering .shelf { display: none; }
+.shelf__head, .browse__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.shelf h2, .browse h2 { margin: 0; font-size: 20px; letter-spacing: -.01em; }
+.shelf__row {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 148px; gap: 14px;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+  padding-bottom: 10px; margin: 0 calc(var(--gutter) * -1); padding-inline: var(--gutter);
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.shelf__row > * { scroll-snap-align: start; }
+@media (min-width: 720px) { .shelf__row { grid-auto-columns: 172px; } }
+
+.link-btn {
+  background: none; border: 0; padding: 4px 2px; cursor: pointer;
+  color: var(--text-dim); font-weight: 500; font-size: 14px;
+}
+.link-btn:hover { color: var(--accent); }
+
+/* ---------- Browse ---------- */
+.browse { margin-top: 36px; }
+.is-filtering .browse { margin-top: 24px; }
+.browse__tools { display: flex; align-items: center; gap: 12px; }
+.count { color: var(--text-faint); font-size: 13px; white-space: nowrap; }
+
+.select { position: relative; display: inline-flex; }
+.select select {
+  appearance: none; -webkit-appearance: none;
+  height: 36px; padding: 0 34px 0 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--line); cursor: pointer; font-size: 14px;
+}
+.select::after {
+  content: ""; position: absolute; right: 13px; top: 50%; width: 7px; height: 7px; margin-top: -5px;
+  border-right: 2px solid var(--text-dim); border-bottom: 2px solid var(--text-dim);
+  transform: rotate(45deg); pointer-events: none;
+}
+
+.chips {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin: 0 calc(var(--gutter) * -1) 18px;
+  padding-inline: var(--gutter); scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; flex: none;
+  height: 34px; padding: 0 13px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line);
+  color: var(--text-dim); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.chip:hover { color: var(--text); border-color: #33415a; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+.chip__n { font: 500 12px var(--mono); opacity: .7; }
+.chip svg { width: 15px; height: 15px; margin-left: -2px; }
+.chip[aria-pressed="true"] svg { fill: currentColor; }
+
+/* ---------- Grid & cards ---------- */
+.grid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+@media (min-width: 720px) { .grid { gap: 18px; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); } }
+
+.card { position: relative; min-width: 0; }
+.card__link {
+  display: block; text-decoration: none; border-radius: var(--radius);
+  outline-offset: 3px;
+}
+.card__art {
+  position: relative; aspect-ratio: 1; overflow: hidden;
+  border-radius: var(--radius); background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+  transition: transform .2s var(--ease), box-shadow .2s;
+}
+.card__art img {
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity .3s, transform .35s var(--ease);
+}
+.card__art img.is-loaded { opacity: 1; }
+.card__ph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font: 700 40px var(--mono); color: var(--text-faint);
+  background: linear-gradient(135deg, var(--surface-hi), var(--surface));
+}
+.card__art img.is-loaded + .card__ph { display: none; }
+.card__link:hover .card__art,
+.card__link:focus-visible .card__art { transform: translateY(-3px); box-shadow: 0 0 0 2px var(--accent), 0 14px 28px -12px rgba(0,0,0,.8); }
+.card__link:hover img { transform: scale(1.05); }
+
+.card__tag {
+  position: absolute; left: 8px; bottom: 8px;
+  padding: 2px 8px; border-radius: 6px;
+  background: rgba(8, 11, 16, .78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  font: 600 11px/18px var(--mono); letter-spacing: .03em; text-transform: uppercase; color: var(--text);
+}
+.card__title {
+  margin: 9px 2px 0; font-size: 14.5px; font-weight: 600; line-height: 1.3;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.card__by {
+  margin: 2px 2px 0; font-size: 12.5px; color: var(--text-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.fav {
+  position: absolute; top: 7px; right: 7px; z-index: 2;
+  display: grid; place-items: center; width: 34px; height: 34px; padding: 0;
+  border: 0; border-radius: 10px; cursor: pointer;
+  background: rgba(8, 11, 16, .7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  color: #fff; opacity: 0; transform: scale(.9);
+  transition: opacity .15s, transform .15s var(--ease), color .15s;
+}
+.fav svg { width: 18px; height: 18px; }
+.card:hover .fav, .fav:focus-visible, .fav[aria-pressed="true"] { opacity: 1; transform: none; }
+.fav[aria-pressed="true"] { color: var(--star); }
+.fav[aria-pressed="true"] svg, #player-fav[aria-pressed="true"] svg { fill: currentColor; }
+@media (hover: none) { .fav { opacity: 1; transform: none; } }
+
+/* skeletons */
+.skel .card__art { background: linear-gradient(100deg, var(--surface) 30%, var(--surface-hi) 50%, var(--surface) 70%); background-size: 300% 100%; animation: shimmer 1.4s linear infinite; }
+.skel .card__title { height: 14px; width: 75%; border-radius: 5px; background: var(--surface); }
+.skel .card__by { height: 11px; width: 45%; margin-top: 7px; border-radius: 5px; background: var(--surface); }
+@keyframes shimmer { to { background-position: -150% 0; } }
+
+/* empty / error */
+.state {
+  display: grid; justify-items: center; gap: 10px; padding: 64px 16px; text-align: center;
+  border: 1px dashed var(--line); border-radius: var(--radius); color: var(--text-dim);
+}
+.state h3 { margin: 0; color: var(--text); font-size: 18px; }
+.state p { margin: 0; max-width: 44ch; }
+.state .btn { margin-top: 8px; }
+
+/* ---------- Footer ---------- */
+.footer { margin-top: 72px; padding-top: 22px; padding-bottom: 40px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 13.5px; }
+.footer p { margin: 0 0 6px; }
+.footer a { color: var(--text-dim); }
+.footer a:hover { color: var(--accent); }
+.footer__meta { font-size: 12px; }
+
+/* ---------- Player ---------- */
+.player {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column;
+  background: #000;
+  animation: player-in .22s var(--ease);
+}
+@keyframes player-in { from { opacity: 0; transform: scale(.985); } }
+.player__bar {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  height: 56px; padding: 0 10px; padding-top: env(safe-area-inset-top);
+  box-sizing: content-box;
+  background: var(--bg-raise); border-bottom: 1px solid var(--line);
+}
+.player__info { flex: 1; min-width: 0; }
+.player__info h2 { margin: 0; font-size: 16px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player__info a { display: block; font-size: 12.5px; color: var(--text-faint); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player__info a[href]:hover { color: var(--accent); }
+.player__actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0; flex: none;
+  border: 1px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; color: var(--text-dim);
+  transition: background .15s, color .15s;
+}
+.icon-btn:hover { background: var(--surface-hi); color: var(--text); }
+.icon-btn--accent { color: var(--accent); }
+#player-fav[aria-pressed="true"] { color: var(--star); }
+
+@media (max-width: 480px) {
+  .player__bar { gap: 4px; padding: 0 6px; }
+  .player__actions { gap: 0; }
+  .icon-btn { width: 38px; }
+}
+
+.player__stage { position: relative; flex: 1; min-height: 0; background: #000; }
+.player__stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+.player__stage:fullscreen { background: #000; }
+
+.player__msg {
+  position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; justify-items: center; gap: 12px;
+  padding: 24px; text-align: center; color: var(--text-dim); background: var(--bg);
+}
+.player__msg h3 { margin: 0; color: var(--text); font-size: 18px; }
+.player__msg p { margin: 0; max-width: 46ch; }
+.spinner {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 3px solid var(--line); border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; z-index: 60;
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  padding: 10px 16px; border-radius: 12px;
+  background: var(--surface-hi); border: 1px solid var(--line); box-shadow: 0 12px 30px -10px rgba(0,0,0,.7);
+  font-size: 14px; transition: opacity .2s, transform .2s var(--ease);
+}
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+</style>
+</head>
+<body>
+  <a class="skip" href="#library">Skip to games</a>
+
+  <header class="topbar">
+    <div class="topbar__inner wrap">
+      <a class="brand" href="#" aria-label="GNMATH home">
+        <span class="brand__mark" aria-hidden="true">∑</span>
+        <span class="brand__name" data-site-name>GNMATH</span>
+      </a>
+
+      <label class="search" for="search">
+        <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="sr-only">Search games</span>
+        <input id="search" type="search" placeholder="Search games" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        <kbd class="search__hint" aria-hidden="true">/</kbd>
+      </label>
+
+      <button class="btn btn--accent" id="random" type="button" title="Play a random game">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" class="fill"/><circle cx="15.5" cy="15.5" r="1.4" class="fill"/><circle cx="15.5" cy="8.5" r="1.4" class="fill"/><circle cx="8.5" cy="15.5" r="1.4" class="fill"/></svg>
+        <span>Random</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="library" class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">Pick a game. Any game.</h1>
+      <p class="hero__sub"><span class="mono" id="hero-count">—</span> games, in your browser. No downloads, no installs.</p>
+    </section>
+
+    <section class="shelf" id="shelf-recent" hidden aria-labelledby="shelf-recent-title">
+      <div class="shelf__head">
+        <h2 id="shelf-recent-title">Continue playing</h2>
+        <button class="link-btn" type="button" id="clear-recent">Clear</button>
+      </div>
+      <div class="shelf__row" id="recent-row"></div>
+    </section>
+
+    <section class="shelf" id="shelf-featured" hidden aria-labelledby="shelf-featured-title">
+      <div class="shelf__head">
+        <h2 id="shelf-featured-title">Featured</h2>
+        <button class="link-btn" type="button" data-jump="featured">See all</button>
+      </div>
+      <div class="shelf__row" id="featured-row"></div>
+    </section>
+
+    <section class="browse" aria-labelledby="browse-title">
+      <div class="browse__head">
+        <h2 id="browse-title">All games</h2>
+        <div class="browse__tools">
+          <span class="count mono" id="result-count" aria-live="polite"></span>
+          <label class="select">
+            <span class="sr-only">Sort games</span>
+            <select id="sort">
+              <option value="new">Newest</option>
+              <option value="old">Oldest</option>
+              <option value="az">A–Z</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <nav class="chips" id="chips" aria-label="Categories"></nav>
+
+      <div class="grid" id="grid" aria-busy="true"></div>
+
+      <div class="state" id="state" hidden></div>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <p>Game library from <a href="https://github.com/gn-math" target="_blank" rel="noopener">gn-math</a>. Every game belongs to its original creators, credited on each game.</p>
+    <p><a href="fern-proxy.html">Fern Proxy</a>: a PostgreSQL data-masking proxy, with a setup guide.</p>
+    <p class="mono footer__meta" id="source-meta"></p>
+  </footer>
+
+  <!-- Player -->
+  <div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="player-title">
+    <div class="player__bar">
+      <button class="icon-btn" type="button" id="player-back" title="Back to games">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+        <span class="sr-only">Back to games</span>
+      </button>
+      <div class="player__info">
+        <h2 id="player-title">Loading…</h2>
+        <a id="player-author" target="_blank" rel="noopener"></a>
+      </div>
+      <div class="player__actions">
+        <button class="icon-btn" type="button" id="player-fav" title="Add to favorites" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>
+          <span class="sr-only">Favorite</span>
+        </button>
+        <button class="icon-btn" type="button" id="player-reload" title="Restart game">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+          <span class="sr-only">Restart game</span>
+        </button>
+        <button class="icon-btn" type="button" id="player-popout" title="Open in a new tab">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+          <span class="sr-only">Open in a new tab</span>
+        </button>
+        <button class="icon-btn icon-btn--accent" type="button" id="player-full" title="Fullscreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <span class="sr-only">Fullscreen</span>
+        </button>
+      </div>
+    </div>
+    <div class="player__stage" id="player-stage">
+      <div class="player__msg" id="player-msg" hidden></div>
+    </div>
+  </div>
+
+  <script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Config. Every source list is tried in order, so if one CDN is down or
+  // blocked the next one takes over.
+  // ---------------------------------------------------------------------------
+  const CONFIG = {
+    siteName: 'GNMATH',
+    zones: [
+      'https://raw.githubusercontent.com/gn-math/assets/main/zones.json',
+      'https://cdn.jsdelivr.net/gh/gn-math/assets@main/zones.json',
+    ],
+    covers: [
+      'https://cdn.jsdelivr.net/gh/gn-math/covers@main',
+      'https://raw.githubusercontent.com/gn-math/covers/main',
+    ],
+    html: [
+      'https://cdn.jsdelivr.net/gh/gn-math/html@main',
+      'https://raw.githubusercontent.com/gn-math/html/main',
+    ],
+    // Games bundled with this site (relative URLs, no catalog needed).
+    localGames: [
+      { id: 900001, name: 'Fern Proxy', author: 'Fern Proxy', special: ['tools'], featured: true,
+        url: 'fern-proxy.html#demo', cover: '', local: true, link: true },
+    ],
+    recentLimit: 16,
+    connectTimeout: 15000,
+  };
+
+  // gn-math "special" tags -> chip label and short card badge.
+  const TAGS = {
+    port: ['Ports', 'Port'],
+    flash: ['Flash', 'Flash'],
+    emulator: ['Emulators', 'Emu'],
+    fnf: ['FNF', 'FNF'],
+    nds: ['Nintendo DS', 'DS'],
+    dos: ['DOS', 'DOS'],
+    tools: ['Tools', 'Tool'],
+    psx: ['PlayStation', 'PS1'],
+    gba: ['Game Boy Advance', 'GBA'],
+    nes: ['NES', 'NES'],
+    n64: ['Nintendo 64', 'N64'],
+  };
+  // Most specific tag wins when a game has several.
+  const BADGE_ORDER = ['nds', 'psx', 'gba', 'nes', 'n64', 'dos', 'fnf', 'flash', 'port', 'emulator', 'tools'];
+
+  const KEY = {
+    zones: 'gnmath:zones',
+    favs: 'gnmath:favs',
+    recent: 'gnmath:recent',
+    sort: 'gnmath:sort',
+  };
+
+  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+  const $ = (sel) => document.querySelector(sel);
+
+  const store = {
+    get(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw == null ? fallback : JSON.parse(raw);
+      } catch {
+        return fallback;
+      }
+    },
+    set(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch { /* storage full or blocked: favorites just won't persist */ }
+    },
+  };
+
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+  const normalize = (s) => String(s || '')
+    .toLowerCase()
+    .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const fill = (template, bases, token) => (
+    template.includes(token) ? bases.map((b) => template.replace(token, b)) : [template]
+  );
+
+  // Tries each URL in turn. The timeout only covers connecting; large game
+  // files are allowed to take as long as they need to download.
+  async function fetchFirst(urls, { as = 'text', cache = 'default' } = {}) {
+    let lastError = new Error('No sources');
+    for (const url of urls) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), CONFIG.connectTimeout);
+      try {
+        const res = await fetch(url, { signal: ctrl.signal, cache });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`HTTP ${res.status} from ${new URL(url).host}`);
+        const data = as === 'json' ? await res.json() : await res.text();
+        return { data, url };
+      } catch (err) {
+        clearTimeout(timer);
+        lastError = err;
+      }
+    }
+    throw lastError;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    let el = $('.toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'toast';
+      el.setAttribute('role', 'status');
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    requestAnimationFrame(() => el.classList.add('is-on'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('is-on'), 2600);
+  }
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  const state = {
+    games: [],
+    byId: new Map(),
+    loaded: false,
+    filter: 'all',
+    query: '',
+    sort: store.get(KEY.sort, 'new'),
+    favs: new Set(store.get(KEY.favs, [])),
+    recent: store.get(KEY.recent, []),
+  };
+
+  const el = {
+    grid: $('#grid'),
+    chips: $('#chips'),
+    state: $('#state'),
+    count: $('#result-count'),
+    heroCount: $('#hero-count'),
+    browseTitle: $('#browse-title'),
+    search: $('#search'),
+    sort: $('#sort'),
+    random: $('#random'),
+    recentShelf: $('#shelf-recent'),
+    recentRow: $('#recent-row'),
+    featuredShelf: $('#shelf-featured'),
+    featuredRow: $('#featured-row'),
+    sourceMeta: $('#source-meta'),
+    player: $('#player'),
+    stage: $('#player-stage'),
+    msg: $('#player-msg'),
+    pTitle: $('#player-title'),
+    pAuthor: $('#player-author'),
+    pFav: $('#player-fav'),
+    background: [$('.topbar'), $('#library'), $('.footer')],
+  };
+
+  // ---------------------------------------------------------------------------
+  // Catalog
+  // ---------------------------------------------------------------------------
+  function ingest(raw) {
+    if (!Array.isArray(raw)) throw new Error('Unexpected catalog format');
+    const games = [];
+    [...raw, ...CONFIG.localGames].forEach((z) => {
+      if (!z || typeof z.id !== 'number' || z.id < 0 || !z.url || !z.name) return;
+      const name = String(z.name).trim();
+      // "[!] ..." entries are gn-math's own notices (suggestion box, comments).
+      if (name.startsWith('[!]')) return;
+      const url = String(z.url);
+      const external = !!z.link || (!z.local && !url.includes('{HTML_URL}'));
+      if (external && !z.local && !/^https?:\/\//.test(url)) return;
+      const author = z.author ? String(z.author).trim() : '';
+      const tags = Array.isArray(z.special) ? z.special.map(String) : [];
+      const nameNorm = normalize(name);
+      games.push({
+        id: z.id,
+        name,
+        author,
+        authorLink: typeof z.authorLink === 'string' && /^https?:\/\//.test(z.authorLink) ? z.authorLink : '',
+        tags,
+        featured: !!z.featured,
+        url,
+        cover: z.cover ? String(z.cover) : '',
+        external,
+        nameNorm,
+        nameCompact: nameNorm.replace(/ /g, ''),
+        haystack: `${nameNorm} ${normalize(author)}`,
+      });
+    });
+    if (!games.length) throw new Error('The catalog is empty');
+
+    state.games = games;
+    state.byId = new Map(games.map((g) => [g.id, g]));
+    state.loaded = true;
+    gridCards.clear();
+
+    // Drop saved ids for games that no longer exist.
+    state.recent = state.recent.filter((id) => state.byId.has(id));
+    el.heroCount.textContent = games.length.toLocaleString();
+    el.search.placeholder = `Search ${games.length.toLocaleString()} games`;
+    el.random.disabled = false;
+    renderChips();
+    renderShelves();
+    renderGrid();
+  }
+
+  async function loadCatalog() {
+    const cached = store.get(KEY.zones, null);
+    let shown = false;
+    if (cached && Array.isArray(cached.data)) {
+      try {
+        ingest(cached.data);
+        shown = true;
+        setSourceMeta(`saved copy from ${new Date(cached.t).toLocaleString()}`);
+        route();
+      } catch { /* bad cache, fetch fresh below */ }
+    }
+    if (!shown) renderSkeletons();
+
+    try {
+      const { data, url } = await fetchFirst(CONFIG.zones, { as: 'json', cache: 'no-cache' });
+      const changed = !shown || JSON.stringify(data) !== JSON.stringify(cached.data);
+      store.set(KEY.zones, { t: Date.now(), data });
+      if (changed) {
+        ingest(data);
+        route();
+      }
+      setSourceMeta(`live from ${new URL(url).host}`);
+    } catch (err) {
+      if (shown) {
+        toast('Showing your saved game list. Could not reach the catalog.');
+        return;
+      }
+      showState({
+        title: 'Couldn’t load the game library',
+        body: `The catalog servers didn’t respond (${err.message}). Check your connection and try again.`,
+        action: { label: 'Try again', run: () => { hideState(); loadCatalog(); } },
+      });
+      el.grid.setAttribute('aria-busy', 'false');
+      el.grid.replaceChildren();
+    }
+  }
+
+  function setSourceMeta(text) {
+    el.sourceMeta.textContent = `${state.games.length.toLocaleString()} games · catalog ${text}`;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cards
+  // ---------------------------------------------------------------------------
+  const gridCards = new Map();
+
+  function badgeFor(g) {
+    const tag = BADGE_ORDER.find((t) => g.tags.includes(t)) || g.tags[0];
+    if (!tag) return '';
+    return TAGS[tag] ? TAGS[tag][1] : titleCase(tag);
+  }
+
+  function playHref(g) {
+    return g.external ? g.url : `#/play/${g.id}`;
+  }
+
+  function makeCard(g) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.dataset.id = g.id;
+    const badge = badgeFor(g);
+    const fav = state.favs.has(g.id);
+    card.innerHTML = `
+      <a class="card__link" href="${esc(playHref(g))}"${g.external ? ' target="_blank" rel="noopener"' : ''}>
+        <div class="card__art">
+          <img alt="" width="256" height="256" loading="lazy" decoding="async">
+          <div class="card__ph" aria-hidden="true">${esc(g.name.replace(/[^\p{L}\p{N}]/gu, '').charAt(0) || '?')}</div>
+          ${badge ? `<span class="card__tag">${esc(badge)}</span>` : ''}
+        </div>
+        <h3 class="card__title">${esc(g.name)}</h3>
+        <p class="card__by">${esc(g.author || 'Unknown creator')}</p>
+      </a>
+      <button class="fav" type="button" aria-pressed="${fav}" aria-label="${fav ? 'Remove' : 'Add'} ${esc(g.name)} ${fav ? 'from' : 'to'} favorites">${STAR}</button>`;
+
+    const img = card.querySelector('img');
+    const sources = g.cover ? fill(g.cover, CONFIG.covers, '{COVER_URL}') : [];
+    let i = 0;
+    img.addEventListener('load', () => img.classList.add('is-loaded'));
+    img.addEventListener('error', () => {
+      i += 1;
+      if (i < sources.length) img.src = sources[i];
+    });
+    if (sources.length) img.src = sources[0];
+    return card;
+  }
+
+  function gridCard(g) {
+    let card = gridCards.get(g.id);
+    if (!card) {
+      card = makeCard(g);
+      gridCards.set(g.id, card);
+    }
+    return card;
+  }
+
+  function renderSkeletons() {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('div');
+      s.className = 'card skel';
+      s.setAttribute('aria-hidden', 'true');
+      s.innerHTML = '<div class="card__art"></div><div class="card__title"></div><div class="card__by"></div>';
+      frag.appendChild(s);
+    }
+    el.grid.replaceChildren(frag);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Filtering, sorting, search
+  // ---------------------------------------------------------------------------
+  function filterLabel(key) {
+    if (key === 'all') return 'All games';
+    if (key === 'featured') return 'Featured';
+    if (key === 'favorites') return 'Favorites';
+    if (key === 'untagged') return 'HTML5';
+    const tag = key.slice(4);
+    return TAGS[tag] ? TAGS[tag][0] : titleCase(tag);
+  }
+
+  function matchesFilter(g, key) {
+    if (key === 'all') return true;
+    if (key === 'featured') return g.featured;
+    if (key === 'favorites') return state.favs.has(g.id);
+    if (key === 'untagged') return g.tags.length === 0;
+    return g.tags.includes(key.slice(4));
+  }
+
+  // Lower is a better match.
+  function relevance(g, q, qCompact) {
+    if (g.nameNorm === q) return 0;
+    if (g.nameNorm.startsWith(q)) return 1;
+    if (` ${g.nameNorm}`.includes(` ${q}`)) return 2;
+    if (g.nameNorm.includes(q) || g.nameCompact.includes(qCompact)) return 3;
+    return 4;
+  }
+
+  const SORTS = {
+    new: (a, b) => b.id - a.id,
+    old: (a, b) => a.id - b.id,
+    az: (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }),
+  };
+
+  function visibleGames() {
+    const q = normalize(state.query);
+    const qCompact = q.replace(/ /g, '');
+    const terms = q ? q.split(' ') : [];
+    let list = state.games.filter((g) => matchesFilter(g, state.filter));
+    if (q) {
+      list = list.filter((g) => terms.every((t) => g.haystack.includes(t)) || g.nameCompact.includes(qCompact));
+    }
+    const bySort = SORTS[state.sort] || SORTS.new;
+    if (q) {
+      const score = new Map(list.map((g) => [g.id, relevance(g, q, qCompact)]));
+      return list.sort((a, b) => score.get(a.id) - score.get(b.id) || bySort(a, b));
+    }
+    return list.sort(bySort);
+  }
+
+  function renderGrid() {
+    if (!state.loaded) return;
+    const list = visibleGames();
+    const frag = document.createDocumentFragment();
+    for (const g of list) frag.appendChild(gridCard(g));
+    el.grid.replaceChildren(frag);
+    el.grid.setAttribute('aria-busy', 'false');
+
+    const filtering = !!state.query.trim() || state.filter !== 'all';
+    document.body.classList.toggle('is-filtering', filtering);
+    el.browseTitle.textContent = state.query.trim()
+      ? `Results for “${state.query.trim()}”`
+      : filterLabel(state.filter);
+    el.count.textContent = `${list.length.toLocaleString()} ${list.length === 1 ? 'game' : 'games'}`;
+
+    if (list.length) {
+      hideState();
+    } else if (state.filter === 'favorites' && !state.query.trim()) {
+      showState({
+        title: 'No favorites yet',
+        body: 'Tap the star on any game and it will be saved here on this device.',
+        action: { label: 'Browse all games', run: () => setFilter('all') },
+      });
+    } else {
+      showState({
+        title: 'No games found',
+        body: state.filter === 'all'
+          ? `Nothing matches “${state.query.trim()}”. Try a shorter or different search.`
+          : `Nothing in ${filterLabel(state.filter)} matches “${state.query.trim()}”.`,
+        action: { label: 'Clear search and filters', run: resetBrowse },
+      });
+    }
+  }
+
+  function renderChips() {
+    const counts = new Map();
+    let untagged = 0;
+    for (const g of state.games) {
+      if (!g.tags.length) untagged++;
+      for (const t of g.tags) counts.set(t, (counts.get(t) || 0) + 1);
+    }
+    const favCount = state.games.filter((g) => state.favs.has(g.id)).length;
+    const filters = [
+      ['all', state.games.length],
+      ['featured', state.games.filter((g) => g.featured).length],
+      ['favorites', favCount],
+      ...(untagged ? [['untagged', untagged]] : []),
+      ...[...counts].sort((a, b) => b[1] - a[1]).map(([t, n]) => [`tag:${t}`, n]),
+    ].filter(([key, n]) => n > 0 || key === 'favorites' || key === 'all');
+
+    if (!filters.some(([key]) => key === state.filter)) state.filter = 'all';
+
+    el.chips.innerHTML = filters.map(([key, n]) => `
+      <button class="chip" type="button" data-filter="${esc(key)}" aria-pressed="${key === state.filter}">
+        ${key === 'favorites' ? STAR : ''}
+        ${esc(key === 'all' ? 'All' : filterLabel(key))}<span class="chip__n">${n}</span>
+      </button>`).join('');
+  }
+
+  function renderShelves() {
+    const recent = state.recent.map((id) => state.byId.get(id)).filter(Boolean);
+    el.recentRow.replaceChildren(...recent.map(makeCard));
+    el.recentShelf.hidden = !recent.length;
+
+    const featured = state.games.filter((g) => g.featured).sort(SORTS.new);
+    el.featuredRow.replaceChildren(...featured.map(makeCard));
+    el.featuredShelf.hidden = !featured.length;
+  }
+
+  function setFilter(key) {
+    state.filter = key;
+    for (const chip of el.chips.querySelectorAll('.chip')) {
+      chip.setAttribute('aria-pressed', String(chip.dataset.filter === key));
+    }
+    renderGrid();
+    const active = el.chips.querySelector('[aria-pressed="true"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    const top = el.chips.getBoundingClientRect().top;
+    if (top < 64) window.scrollTo({ top: Math.max(0, window.scrollY + top - 140) });
+  }
+
+  function resetBrowse() {
+    state.query = '';
+    el.search.value = '';
+    setFilter('all');
+  }
+
+  function showState({ title, body, action }) {
+    el.state.innerHTML = `<h3>${esc(title)}</h3><p>${esc(body)}</p>${action ? `<button class="btn" type="button">${esc(action.label)}</button>` : ''}`;
+    if (action) el.state.querySelector('button').addEventListener('click', action.run);
+    el.state.hidden = false;
+  }
+
+  function hideState() {
+    el.state.hidden = true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Favorites & recently played
+  // ---------------------------------------------------------------------------
+  function toggleFav(id) {
+    const g = state.byId.get(id);
+    if (!g) return;
+    const on = !state.favs.has(id);
+    if (on) state.favs.add(id); else state.favs.delete(id);
+    store.set(KEY.favs, [...state.favs]);
+
+    for (const btn of document.querySelectorAll(`.card[data-id="${id}"] .fav`)) {
+      btn.setAttribute('aria-pressed', String(on));
+      btn.setAttribute('aria-label', `${on ? 'Remove' : 'Add'} ${g.name} ${on ? 'from' : 'to'} favorites`);
+    }
+    if (current && current.game.id === id) syncPlayerFav();
+
+    const chipN = el.chips.querySelector('[data-filter="favorites"] .chip__n');
+    if (chipN) chipN.textContent = state.games.filter((x) => state.favs.has(x.id)).length;
+    if (state.filter === 'favorites' && !current) renderGrid();
+    toast(on ? `Added ${g.name} to favorites` : `Removed ${g.name} from favorites`);
+  }
+
+  function addRecent(id) {
+    state.recent = [id, ...state.recent.filter((x) => x !== id)].slice(0, CONFIG.recentLimit);
+    store.set(KEY.recent, state.recent);
+    renderShelves();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Player
+  // ---------------------------------------------------------------------------
+  let current = null; // { game, html, token }
+  let lastFocus = null;
+  let landedOnGame = /^#\/play\//.test(location.hash);
+
+  function setBackgroundInert(on) {
+    for (const node of el.background) {
+      if (on) node.setAttribute('inert', ''); else node.removeAttribute('inert');
+    }
+  }
+
+  function syncPlayerFav() {
+    const on = state.favs.has(current.game.id);
+    el.pFav.setAttribute('aria-pressed', String(on));
+    el.pFav.title = on ? 'Remove from favorites' : 'Add to favorites';
+  }
+
+  function showPlayerMsg(html) {
+    el.msg.innerHTML = html;
+    el.msg.hidden = false;
+  }
+
+  function removeFrame() {
+    el.stage.querySelector('iframe')?.remove();
+  }
+
+  function mountFrame(html) {
+    removeFrame();
+    const frame = document.createElement('iframe');
+    frame.title = current.game.name;
+    frame.allow = 'fullscreen; autoplay; gamepad; clipboard-write; screen-wake-lock; accelerometer; gyroscope';
+    frame.setAttribute('allowfullscreen', '');
+    // Same-origin so saves work, but no top-navigation: a game can't
+    // redirect the whole site away.
+    frame.setAttribute('sandbox', [
+      'allow-scripts', 'allow-same-origin', 'allow-forms', 'allow-modals', 'allow-pointer-lock',
+      'allow-popups', 'allow-popups-to-escape-sandbox', 'allow-downloads', 'allow-orientation-lock',
+      'allow-presentation',
+    ].join(' '));
+    el.stage.appendChild(frame);
+
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    el.msg.hidden = true;
+    frame.focus();
+  }
+
+  async function loadGame() {
+    const token = {};
+    current.token = token;
+    current.html = null;
+    removeFrame();
+    showPlayerMsg('<div class="spinner" aria-hidden="true"></div><p>Loading game…</p>');
+    try {
+      const { data } = await fetchFirst(fill(current.game.url, CONFIG.html, '{HTML_URL}'));
+      if (!current || current.token !== token) return; // closed or switched meanwhile
+      current.html = data;
+      mountFrame(data);
+    } catch (err) {
+      if (!current || current.token !== token) return;
+      showPlayerMsg(`
+        <h3>This game didn’t load</h3>
+        <p>${esc(err.message || 'Network error')}. The game server may be busy or blocked on this network.</p>
+        <button class="btn btn--accent" type="button" data-retry>Try again</button>`);
+      el.msg.querySelector('[data-retry]').addEventListener('click', loadGame);
+    }
+  }
+
+  function openPlayer(g) {
+    if (current && current.game.id === g.id) return;
+    if (!current) lastFocus = document.activeElement;
+    current = { game: g, html: null, token: null };
+
+    el.pTitle.textContent = g.name;
+    el.pAuthor.textContent = g.author ? `by ${g.author}` : '';
+    if (g.authorLink) el.pAuthor.href = g.authorLink; else el.pAuthor.removeAttribute('href');
+    syncPlayerFav();
+
+    el.player.hidden = false;
+    document.body.classList.add('is-playing');
+    setBackgroundInert(true);
+    document.title = `${g.name} · ${CONFIG.siteName}`;
+    $('#player-back').focus();
+
+    addRecent(g.id);
+    loadGame();
+  }
+
+  function closePlayer() {
+    landedOnGame = false;
+    if (!current) return;
+    current = null;
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    removeFrame();
+    el.msg.hidden = true;
+    el.player.hidden = true;
+    document.body.classList.remove('is-playing');
+    setBackgroundInert(false);
+    document.title = CONFIG.siteName;
+    if (state.filter === 'favorites') renderGrid();
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
+  }
+
+  function leavePlayer() {
+    if (landedOnGame) {
+      // Opened straight from a shared link: there is no in-app page to go back to.
+      landedOnGame = false;
+      history.replaceState(null, '', location.pathname + location.search);
+      route();
+    } else {
+      history.back();
+    }
+  }
+
+  function goFullscreen() {
+    const target = el.stage;
+    const request = target.requestFullscreen || target.webkitRequestFullscreen;
+    if (!request) {
+      toast('Fullscreen isn’t supported in this browser');
+      return;
+    }
+    Promise.resolve(request.call(target)).catch(() => toast('Fullscreen was blocked'));
+  }
+
+  function popOut() {
+    if (!current || !current.html) {
+      toast('Wait for the game to finish loading first');
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([current.html], { type: 'text/html' }));
+    const win = window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    if (!win) {
+      toast('Your browser blocked the new tab');
+      return;
+    }
+    leavePlayer();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Routing: #/play/<id>
+  // ---------------------------------------------------------------------------
+  function route() {
+    const m = location.hash.match(/^#\/play\/(\d+)$/);
+    if (!m) {
+      closePlayer();
+      return;
+    }
+    if (!state.loaded) return; // route() runs again once the catalog arrives
+    const g = state.byId.get(Number(m[1]));
+    if (g && !g.external) {
+      openPlayer(g);
+    } else {
+      closePlayer();
+      history.replaceState(null, '', location.pathname + location.search);
+      toast('That game isn’t in the library anymore');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Events
+  // ---------------------------------------------------------------------------
+  function onCardAreaClick(e) {
+    const fav = e.target.closest('.fav');
+    if (fav) {
+      e.preventDefault();
+      toggleFav(Number(fav.closest('.card').dataset.id));
+    }
+  }
+  [el.grid, el.recentRow, el.featuredRow].forEach((node) => node.addEventListener('click', onCardAreaClick));
+
+  el.chips.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (chip) setFilter(chip.dataset.filter);
+  });
+
+  document.querySelector('[data-jump="featured"]').addEventListener('click', () => setFilter('featured'));
+
+  $('#clear-recent').addEventListener('click', () => {
+    state.recent = [];
+    store.set(KEY.recent, []);
+    renderShelves();
+  });
+
+  let searchTimer;
+  el.search.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      state.query = el.search.value;
+      renderGrid();
+    }, 90);
+  });
+  el.search.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') el.search.blur();
+    if (e.key === 'Escape' && el.search.value) {
+      el.search.value = '';
+      state.query = '';
+      renderGrid();
+    }
+  });
+
+  el.sort.value = SORTS[state.sort] ? state.sort : 'new';
+  el.sort.addEventListener('change', () => {
+    state.sort = el.sort.value;
+    store.set(KEY.sort, state.sort);
+    renderGrid();
+  });
+
+  el.random.addEventListener('click', () => {
+    const visible = visibleGames();
+    const pool = (visible.length ? visible : state.games).filter((g) => !g.external);
+    if (!pool.length) return;
+    const g = pool[Math.floor(Math.random() * pool.length)];
+    location.hash = `#/play/${g.id}`;
+  });
+
+  $('.brand').addEventListener('click', (e) => {
+    e.preventDefault();
+    resetBrowse();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  $('#player-back').addEventListener('click', leavePlayer);
+  $('#player-reload').addEventListener('click', () => {
+    if (!current) return;
+    if (current.html) mountFrame(current.html); else loadGame();
+  });
+  $('#player-full').addEventListener('click', goFullscreen);
+  $('#player-popout').addEventListener('click', popOut);
+  el.pFav.addEventListener('click', () => current && toggleFav(current.game.id));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || current) return;
+    const t = e.target;
+    if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || t.isContentEditable) return;
+    e.preventDefault();
+    el.search.focus();
+    el.search.select();
+  });
+
+  window.addEventListener('hashchange', route);
+
+  // ---------------------------------------------------------------------------
+  // Boot
+  // ---------------------------------------------------------------------------
+  document.title = CONFIG.siteName;
+  for (const node of document.querySelectorAll('[data-site-name]')) node.textContent = CONFIG.siteName;
+  el.random.disabled = true;
+  loadCatalog();
+})();
+
+</script>
+</body>
+</html>
