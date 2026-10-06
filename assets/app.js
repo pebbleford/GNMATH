@@ -20,7 +20,10 @@
       'https://raw.githubusercontent.com/gn-math/html/main',
     ],
     // Games bundled with this site (relative URLs, no catalog needed).
-    localGames: [],
+    localGames: [
+      { id: 900001, name: 'Fern Proxy', author: 'Fern Proxy', special: ['tools'], featured: true,
+        url: 'fern-proxy.html#demo', cover: '', local: true, link: true },
+    ],
     recentLimit: 16,
     connectTimeout: 15000,
   };
@@ -174,8 +177,8 @@
       // "[!] ..." entries are gn-math's own notices (suggestion box, comments).
       if (name.startsWith('[!]')) return;
       const url = String(z.url);
-      const external = !z.local && !url.includes('{HTML_URL}');
-      if (external && !/^https?:\/\//.test(url)) return;
+      const external = !!z.link || (!z.local && !url.includes('{HTML_URL}'));
+      if (external && !z.local && !/^https?:\/\//.test(url)) return;
       const author = z.author ? String(z.author).trim() : '';
       const tags = Array.isArray(z.special) ? z.special.map(String) : [];
       const nameNorm = normalize(name);

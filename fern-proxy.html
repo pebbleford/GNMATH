@@ -23,6 +23,51 @@
 
   <p class="note"><strong>What it is:</strong> Fern proxy is a <em>PostgreSQL</em> proxy. It sits between an app and a database and masks sensitive columns in query results. It is not a web proxy, so it can't unblock websites or games. It also needs a server or Docker, so it can't run on GitHub Pages.</p>
 
+  <h2 id="demo">Try it in your browser (simulation)</h2>
+  <p class="note">This is a <strong>simulation</strong>. A browser can't run the real proxy or open Postgres connections. The two masking strategies below copy the real ones from <code>fern-masking/embedded/src/strategies.rs</code>, and the table is fake data held in this page.</p>
+  <style>
+    .demo label{margin-right:14px;font-size:14px;color:var(--dim)} .demo input[type=text]{width:100%;box-sizing:border-box;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:14px ui-monospace,monospace}
+    .demo table{border-collapse:collapse;width:100%;font:14px ui-monospace,monospace;margin-top:10px} .demo td,.demo th{border:1px solid var(--line);padding:4px 8px;text-align:left} .demo button{background:var(--accent);color:#052618;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;margin-top:8px}
+  </style>
+  <div class="demo">
+    <p>
+      <label>Strategy
+        <select id="dstrat"><option value="shape">caviar-preserve-shape</option><option value="fixed">caviar (fixed length 6)</option></select></label><br>
+      <span style="color:var(--dim);font-size:14px">Columns to mask:</span>
+      <label><input type="checkbox" class="dcol" value="name" checked> name</label>
+      <label><input type="checkbox" class="dcol" value="email" checked> email</label>
+      <label><input type="checkbox" class="dcol" value="ssn" checked> ssn</label>
+      <label><input type="checkbox" class="dcol" value="city"> city</label>
+    </p>
+    <input type="text" id="dsql" value="SELECT * FROM users;" aria-label="SQL query">
+    <button id="drun" type="button">Run through proxy</button>
+    <div id="dout"></div>
+    <p style="color:var(--dim);font-size:14px">Supports <code>SELECT * FROM users</code> or <code>SELECT name, email FROM users</code>. Columns: id, name, email, ssn, city.</p>
+  </div>
+  <script>
+  (function(){
+    var ROWS=[{id:1,name:'Ada Park',email:'ada@mail.io',ssn:'123-45-6789',city:'Oslo'},
+              {id:2,name:'Leo Marsh',email:'leo@mail.io',ssn:'987-65-4321',city:'Lima'},
+              {id:3,name:'Yuki Sato',email:'yuki@mail.io',ssn:'555-12-3456',city:'Kyoto'}];
+    var COLS=['id','name','email','ssn','city'];
+    function mask(v,st){ v=String(v); return st==='fixed'?'******':v.replace(/[A-Za-z0-9]/g,'*'); }
+    function run(){
+      var m=/^\s*select\s+(.+?)\s+from\s+users\s*;?\s*$/i.exec(document.getElementById('dsql').value), out=document.getElementById('dout');
+      if(!m){out.textContent='ERROR: only SELECT ... FROM users is supported in this demo.';return;}
+      var cols=m[1].trim()==='*'?COLS:m[1].split(',').map(function(c){return c.trim().toLowerCase();});
+      var bad=cols.filter(function(c){return COLS.indexOf(c)<0;});
+      if(bad.length){out.textContent='ERROR: column "'+bad[0]+'" does not exist';return;}
+      var forced=[].slice.call(document.querySelectorAll('.dcol:checked')).map(function(i){return i.value;});
+      var st=document.getElementById('dstrat').value;
+      var t=document.createElement('table'), h=t.insertRow();
+      cols.forEach(function(c){var th=document.createElement('th');th.textContent=c;h.appendChild(th);});
+      ROWS.forEach(function(r){var tr=t.insertRow();cols.forEach(function(c){tr.insertCell().textContent=forced.indexOf(c)>=0?mask(r[c],st):r[c];});});
+      out.replaceChildren(t);
+    }
+    document.getElementById('drun').onclick=run; run();
+  })();
+  </script>
+
   <h2>Run it (Docker)</h2>
   <p>This starts a Postgres database, Fern proxy in front of it, and a <code>psql</code> client.</p>
   <pre><code>git clone https://github.com/pebbleford/gnmath.git
