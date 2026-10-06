@@ -18,6 +18,16 @@ It's a static site with no build step and no backend. It reads gn-math's live ca
 
 The real [fern-proxy](https://github.com/fern-proxy/fern-proxy) source (commit `788d27e`, Apache-2.0, license included) is embedded in [`fern-proxy/`](fern-proxy/). It is a Rust PostgreSQL proxy, so it can't run in the browser. See [`fern-proxy.html`](fern-proxy.html) for setup steps.
 
+## Settings panel
+
+The **Settings** button (bottom right) is built in `assets/extras.js`. Everything is saved per device:
+
+- **Tab disguise**: change the tab name and icon, with presets (Classroom, Docs, Drive, Slides, Wikipedia) or your own name and icon URL.
+- **Site name and accent color**.
+- **Panic key**: press a key to jump to a page you choose.
+- **about:blank launcher**: opens the site inside a blank tab.
+- **Fern Proxy demo**: link to the in-browser masking simulation.
+
 ## Run it locally
 
 Any static file server works:
