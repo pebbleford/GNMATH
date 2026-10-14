@@ -2,6 +2,13 @@
 
 Hand this file to Claude in Chrome. It sets up the Ultraviolet web proxy on the user's own Oracle Cloud VM, using only the browser.
 
+## Setting it up again
+
+This file can be run again on a machine that already has some of it. Every step below is safe to repeat: it updates the existing copy and replaces the old container instead of failing. Before step 1, ask the user whether the proxy should run on:
+
+- **their own PC** (already works for them at `http://localhost:8080`): you cannot run commands on their PC from the browser, so give them the commands in the "Own PC" section at the end and let them run them in PowerShell, or
+- **their Oracle VM** (steps 1 to 8), which needs HTTPS to work properly.
+
 ## Goal
 
 Run the open-source [Ultraviolet-App](https://github.com/titaniumnetwork-dev/Ultraviolet-App) web proxy in Docker on the user's existing Oracle Cloud Ubuntu VM, so the user can reach it from a browser. Use DuckDuckGo as its search engine, because Google shows a robot check for proxied traffic.
@@ -43,7 +50,7 @@ sudo systemctl enable --now docker
 
 ### 4. Get and build the proxy
 ```sh
-git clone --depth 1 https://github.com/titaniumnetwork-dev/Ultraviolet-App ~/ultraviolet-app
+if [ -d ~/ultraviolet-app/.git ]; then git -C ~/ultraviolet-app checkout -- public/index.html && git -C ~/ultraviolet-app pull --ff-only; else git clone --depth 1 https://github.com/titaniumnetwork-dev/Ultraviolet-App ~/ultraviolet-app; fi
 cd ~/ultraviolet-app
 sed -i 's#https://www.google.com/search?q=%s#https://duckduckgo.com/?q=%s#' public/index.html
 grep -n "duckduckgo" public/index.html
@@ -81,6 +88,24 @@ Ultraviolet uses service workers, which browsers only allow on HTTPS pages or on
 
 ### 8. Check it works
 Open the HTTPS address the user chose in step 7 in Chrome or Edge. Type `duckduckgo.com` or a search term in the box. A page should load. If the browser says the service worker failed or the page is blank, the usual cause is that the address is not HTTPS.
+
+### 9. Point the website at the proxy
+The user's website has a **Proxy** button in its top bar that opens the proxy. To set the address:
+1. Open the user's site (for example `https://pebbleford.github.io/gnmath/`, if GitHub Pages is on for the repo `pebbleford/gnmath`: repo **Settings**, then **Pages**, deploy from `main`, `/ (root)`).
+2. Click **Settings** (bottom right), find **Web proxy**, and enter the proxy's address from step 7. Click **Save**.
+3. Click **Proxy** in the top bar. The proxy should open in a new tab.
+
+The address is saved in that browser only, so it has to be set on each device.
+
+## Own PC (give these to the user to run themselves)
+Docker Desktop must be open and running ("Engine running"). In PowerShell:
+```powershell
+cd ~/ultraviolet-app
+docker rm -f ultraviolet-app
+docker build -t ultraviolet-app .
+docker run -d --name ultraviolet-app --restart unless-stopped -p 8080:8080 ultraviolet-app
+```
+If `~/ultraviolet-app` does not exist yet, first run `git clone https://github.com/titaniumnetwork-dev/Ultraviolet-App ~/ultraviolet-app`, then edit `public/index.html` so the search engine line reads `value="https://duckduckgo.com/?q=%s"`. Then open `http://localhost:8080` in Chrome or Edge.
 
 ## Report back to the user
 Say plainly what worked and what did not. Include:
