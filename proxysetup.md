@@ -90,10 +90,12 @@ Ultraviolet uses service workers, which browsers only allow on HTTPS pages or on
 Open the HTTPS address the user chose in step 7 in Chrome or Edge. Type `duckduckgo.com` or a search term in the box. A page should load. If the browser says the service worker failed or the page is blank, the usual cause is that the address is not HTTPS.
 
 ### 9. Point the website at the proxy
-The user's website has a **Proxy** button in its top bar that opens the proxy. To set the address:
-1. Open the user's site (for example `https://pebbleford.github.io/gnmath/`, if GitHub Pages is on for the repo `pebbleford/gnmath`: repo **Settings**, then **Pages**, deploy from `main`, `/ (root)`).
-2. Click **Settings** (bottom right), find **Web proxy**, and enter the proxy's address from step 7. Click **Save**.
-3. Click **Proxy** in the top bar. The proxy should open in a new tab.
+The user's website is already hosted on **bunny.net** and already set up. Do not set up any hosting, and do not touch GitHub Pages. Just switch to the new UI:
+1. Open the user's bunny.net site address (ask the user for it if you do not have it).
+2. Check that it shows the **new UI**: a **Proxy** button in the top bar and a **Settings** button at the bottom right. If it does, continue at step 4.
+3. If it still shows the old UI, hold-refresh the page first. If it is still old, the bunny.net cache may be stale. Ask the user before changing anything in the bunny.net dashboard. If they agree, the usual fix is to purge the cache of the site's pull zone. If the new files are not on bunny.net at all, stop and ask the user how they upload the site. Do not guess.
+4. Click **Settings**, find **Web proxy**, enter the proxy address from step 7, and click **Save**.
+5. Click **Proxy** in the top bar. The proxy should open in a new tab.
 
 The address is saved in that browser only, so it has to be set on each device.
 
