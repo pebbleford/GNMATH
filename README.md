@@ -26,7 +26,12 @@ The **Settings** button (bottom right) is built in `assets/extras.js`. Everythin
 - **Site name and accent color**.
 - **Panic key**: press a key to jump to a page you choose.
 - **about:blank launcher**: opens the site inside a blank tab.
+- **My game links**: add a link to any game site and it appears in the library.
 - **Fern Proxy demo**: link to the in-browser masking simulation.
+
+## Web proxy (optional, needs a server)
+
+A static site can't proxy other websites. [`scripts/setup-web-proxy.sh`](scripts/setup-web-proxy.sh) runs the open-source [Ultraviolet-App](https://github.com/titaniumnetwork-dev/Ultraviolet-App) in Docker on a VM. It is a separate program from Fern proxy, it needs HTTPS to work properly, and its authors no longer maintain it. Only use it where your network's rules allow it.
 
 ## Run it locally
 

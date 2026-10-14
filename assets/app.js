@@ -171,7 +171,10 @@
   function ingest(raw) {
     if (!Array.isArray(raw)) throw new Error('Unexpected catalog format');
     const games = [];
-    [...raw, ...CONFIG.localGames].forEach((z) => {
+    // Links the user added in Settings ("My game links"): http(s) only, open in a new tab.
+    const myLinks = store.get('gnmath:links', []).filter((l) => l && /^https?:\/\//i.test(l.url) && l.name)
+      .map((l, i) => ({ id: 910000 + i, name: String(l.name), author: 'My links', special: ['tools'], url: String(l.url), cover: '', local: true, link: true }));
+    [...raw, ...CONFIG.localGames, ...myLinks].forEach((z) => {
       if (!z || typeof z.id !== 'number' || z.id < 0 || !z.url || !z.name) return;
       const name = String(z.name).trim();
       // "[!] ..." entries are gn-math's own notices (suggestion box, comments).

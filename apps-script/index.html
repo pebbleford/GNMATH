@@ -649,7 +649,10 @@ svg .fill { fill: currentColor; stroke: none; }
   function ingest(raw) {
     if (!Array.isArray(raw)) throw new Error('Unexpected catalog format');
     const games = [];
-    [...raw, ...CONFIG.localGames].forEach((z) => {
+    // Links the user added in Settings ("My game links"): http(s) only, open in a new tab.
+    const myLinks = store.get('gnmath:links', []).filter((l) => l && /^https?:\/\//i.test(l.url) && l.name)
+      .map((l, i) => ({ id: 910000 + i, name: String(l.name), author: 'My links', special: ['tools'], url: String(l.url), cover: '', local: true, link: true }));
+    [...raw, ...CONFIG.localGames, ...myLinks].forEach((z) => {
       if (!z || typeof z.id !== 'number' || z.id < 0 || !z.url || !z.name) return;
       const name = String(z.name).trim();
       // "[!] ..." entries are gn-math's own notices (suggestion box, comments).
@@ -1362,6 +1365,15 @@ svg .fill { fill: currentColor; stroke: none; }
     <label for="xt-purl">Go to this page</label>
     <input id="xt-purl" type="url" autocomplete="off">
 
+    <h3>My game links</h3>
+    <p class="xt-note">Add a link to any game site. It shows up in the library and opens in a new tab.</p>
+    <label for="xt-lname">Name</label>
+    <input id="xt-lname" type="text" autocomplete="off">
+    <label for="xt-lurl">Link</label>
+    <input id="xt-lurl" type="url" placeholder="https://…" autocomplete="off">
+    <div class="xt-row"><button type="button" id="xt-ladd">Add link</button></div>
+    <div id="xt-llist"></div>
+
     <h3>Tools</h3>
     <div class="xt-row">
       <button type="button" id="xt-blank">Open in about:blank</button>
@@ -1384,7 +1396,7 @@ svg .fill { fill: currentColor; stroke: none; }
     $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#6cf0b0';
     $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
   }
-  const open = () => { fill(); panel.hidden = false; };
+  const open = () => { fill(); renderLinks(); panel.hidden = false; };
   const close = () => { panel.hidden = true; };
   function commit() {
     cfg.preset = $('xt-preset').value; cfg.title = $('xt-title').value.trim(); cfg.icon = $('xt-icon').value.trim();
@@ -1393,6 +1405,27 @@ svg .fill { fill: currentColor; stroke: none; }
     save(); applyAll();
   }
   function applyAll() { applyCloak(); applySiteName(); applyAccent(); }
+
+  const LKEY = 'gnmath:links';
+  const getLinks = () => { try { return JSON.parse(localStorage.getItem(LKEY) || '[]'); } catch { return []; } };
+  const setLinks = (v) => { try { localStorage.setItem(LKEY, JSON.stringify(v)); } catch { /* blocked */ } };
+  function renderLinks() {
+    const box = $('xt-llist'); box.replaceChildren();
+    getLinks().forEach((l, i) => {
+      const row = document.createElement('div'); row.className = 'xt-row';
+      const t = document.createElement('span'); t.textContent = l.name; t.style.flex = '1';
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove';
+      rm.onclick = () => { const a = getLinks(); a.splice(i, 1); setLinks(a); renderLinks(); };
+      row.append(t, rm); box.appendChild(row);
+    });
+  }
+  $('xt-ladd').onclick = () => {
+    const name = $('xt-lname').value.trim(), url = $('xt-lurl').value.trim();
+    if (!name || !/^https?:\/\//i.test(url)) { alert('Enter a name and a link starting with http:// or https://'); return; }
+    const a = getLinks(); a.push({ name, url }); setLinks(a);
+    $('xt-lname').value = ''; $('xt-lurl').value = ''; renderLinks();
+    alert('Added. Reload the page to see it in the library.');
+  };
 
   btn.onclick = open;
   panel.addEventListener('click', (e) => { if (e.target === panel) close(); });
