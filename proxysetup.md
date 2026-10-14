@@ -93,7 +93,10 @@ Open the HTTPS address the user chose in step 7 in Chrome or Edge. Type `duckduc
 The user's website is already hosted on **bunny.net** and already set up. Do not set up any hosting, and do not touch GitHub Pages. Just switch to the new UI:
 1. Open the user's bunny.net site address (ask the user for it if you do not have it).
 2. Check that it shows the **new UI**: a **Proxy** button in the top bar and a **Settings** button at the bottom right. If it does, continue at step 4.
-3. If it still shows the old UI, hold-refresh the page first. If it is still old, the bunny.net cache may be stale. Ask the user before changing anything in the bunny.net dashboard. If they agree, the usual fix is to purge the cache of the site's pull zone. If the new files are not on bunny.net at all, stop and ask the user how they upload the site. Do not guess.
+3. If it still shows the old UI, hold-refresh the page. There is no "switch UI" option in bunny.net: the new UI is just the newer site files from the repo `pebbleford/gnmath` (`index.html`, the `assets/` folder and `fern-proxy.html`). If the old UI persists, ask the user how their bunny.net site gets its files, then follow the matching case below. Ask before changing anything in the dashboard:
+   - **Pull zone with an origin URL:** the new files must be at the origin. If they are, purge the cache (bunny.net, **CDN**, the pull zone, **Caching**, **Purge Cache**).
+   - **Storage zone:** the user (or you, with their permission) uploads the new files over the old ones in the storage zone's file manager, then purges the pull zone's cache.
+   Do not guess which case applies.
 4. Click **Settings**, find **Web proxy**, enter the proxy address from step 7, and click **Save**.
 5. Click **Proxy** in the top bar. The proxy should open in a new tab.
 
