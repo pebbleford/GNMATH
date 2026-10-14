@@ -1248,7 +1248,7 @@ svg .fill { fill: currentColor; stroke: none; }
     slides:    { label: 'Google Slides', title: 'Untitled presentation - Google Slides', icon: 'https://www.google.com/s2/favicons?domain=slides.google.com&sz=64' },
     wiki:      { label: 'Wikipedia', title: 'Wikipedia, the free encyclopedia', icon: 'https://www.google.com/s2/favicons?domain=wikipedia.org&sz=64' },
   };
-  const DEFAULTS = { preset: 'none', title: '', icon: '', siteName: '', accent: '', panicKey: '`', panicUrl: 'https://classroom.google.com' };
+  const DEFAULTS = { preset: 'none', title: '', icon: '', siteName: '', accent: '', panicKey: '`', panicUrl: 'https://classroom.google.com', proxyUrl: 'http://localhost:8080' };
 
   const load = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...DEFAULTS }; } };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch { /* storage blocked */ } };
@@ -1359,6 +1359,11 @@ svg .fill { fill: currentColor; stroke: none; }
     <label for="xt-accent">Accent color</label>
     <input id="xt-accent" type="color" value="#6cf0b0">
 
+    <h3>Web proxy</h3>
+    <label for="xt-proxy">Proxy address (opened by the Proxy button)</label>
+    <input id="xt-proxy" type="url" placeholder="http://localhost:8080" autocomplete="off">
+    <p class="xt-note">Run your own proxy and put its address here. See <a href="proxysetup.md">proxysetup.md</a> and the README.</p>
+
     <h3>Panic key</h3>
     <label for="xt-pkey">Key (press it anywhere outside a text box)</label>
     <input id="xt-pkey" type="text" maxlength="1" autocomplete="off">
@@ -1394,14 +1399,14 @@ svg .fill { fill: currentColor; stroke: none; }
     Object.entries(PRESETS).forEach(([k, p]) => { const o = document.createElement('option'); o.value = k; o.textContent = p.label; sel.appendChild(o); });
     sel.value = cfg.preset; $('xt-title').value = cfg.title; $('xt-icon').value = cfg.icon;
     $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#6cf0b0';
-    $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
+    $('xt-proxy').value = cfg.proxyUrl; $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
   }
   const open = () => { fill(); renderLinks(); panel.hidden = false; };
   const close = () => { panel.hidden = true; };
   function commit() {
     cfg.preset = $('xt-preset').value; cfg.title = $('xt-title').value.trim(); cfg.icon = $('xt-icon').value.trim();
     cfg.siteName = $('xt-name').value.trim(); cfg.accent = $('xt-accent').value;
-    cfg.panicKey = $('xt-pkey').value; cfg.panicUrl = $('xt-purl').value.trim();
+    cfg.proxyUrl = $('xt-proxy').value.trim(); cfg.panicKey = $('xt-pkey').value; cfg.panicUrl = $('xt-purl').value.trim();
     save(); applyAll();
   }
   function applyAll() { applyCloak(); applySiteName(); applyAccent(); }
@@ -1434,6 +1439,22 @@ svg .fill { fill: currentColor; stroke: none; }
   $('xt-close').onclick = close;
   $('xt-reset').onclick = () => { Object.assign(cfg, DEFAULTS); save(); document.title = origTitle; applyAll(); fill(); };
   $('xt-blank').onclick = () => { commit(); openBlank(); };
+
+  // Proxy button in the top bar: opens the user's own proxy in a new tab.
+  const bar = document.querySelector('.topbar__inner');
+  if (bar) {
+    const pb = document.createElement('button');
+    pb.className = 'btn'; pb.type = 'button'; pb.id = 'xt-proxybtn'; pb.title = 'Open your web proxy';
+    pb.innerHTML = '<span>Proxy</span>';
+    pb.querySelector('span').style.display = 'inline';
+    pb.style.width = 'auto'; pb.style.padding = '0 14px';
+    pb.onclick = () => {
+      const u = safeUrl(cfg.proxyUrl);
+      if (!u) { alert('Set your proxy address in Settings first.'); open(); return; }
+      window.open(u, '_blank', 'noopener');
+    };
+    bar.appendChild(pb);
+  }
 
   document.body.append(btn, panel);
   applyAll();
