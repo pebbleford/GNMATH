@@ -221,18 +221,68 @@
     var connection = new BareMux.BareMuxConnection('/baremux/worker.js');
     var sjController = null;
     var ready = null;
+
+    // Resolve once the service worker that covers this path is active.
+    async function waitActive(path) {
+      var reg = await navigator.serviceWorker.getRegistration(location.origin + path);
+      if (!reg) return;
+      var sw = reg.installing || reg.waiting || reg.active;
+      if (!sw || sw.state === 'activated') return;
+      await new Promise(function (resolve) {
+        var check = function () { if (sw.state === 'activated' || sw.state === 'redundant') resolve(); };
+        sw.addEventListener('statechange', check);
+        check();
+      });
+    }
+
+    // Remove Scramjet's service worker and its local database(s) so it can start clean.
+    async function resetScramjetStorage() {
+      try {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        for (var i = 0; i < regs.length; i++) {
+          if (regs[i].scope === location.origin + '/') await regs[i].unregister();
+        }
+      } catch (e) {}
+      try {
+        if (indexedDB.databases) {
+          var dbs = await indexedDB.databases();
+          for (var j = 0; j < dbs.length; j++) {
+            if (dbs[j].name && /scramjet/i.test(dbs[j].name)) {
+              await new Promise(function (resolve) {
+                var q = indexedDB.deleteDatabase(dbs[j].name);
+                q.onsuccess = q.onerror = q.onblocked = function () { resolve(); };
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
     function ensureReady() {
       if (!ready) {
         ready = (async function () {
-          await registerSW(); // Ultraviolet service worker (/uv/sw.js)
-          if (hasSJ) {
-            await navigator.serviceWorker.register('/sw.js', { scope: '/' }); // Scramjet service worker
-            if (!sjController) {
-              var C = $scramjetLoadController().ScramjetController;
+          if (hasSJ && !sjController) {
+            // Start Scramjet's controller BEFORE registering its service worker (the worker can
+            // otherwise create Scramjet's database half-finished, which causes
+            // "object store not found"). If the database is already broken, delete it and retry once.
+            var C = $scramjetLoadController().ScramjetController;
+            var makeController = async function () {
               sjController = new C({ files: { wasm: '/scram/scramjet.wasm.wasm', all: '/scram/scramjet.all.js', sync: '/scram/scramjet.sync.js' } });
               await sjController.init();
+            };
+            try {
+              await makeController();
+            } catch (e) {
+              sjController = null;
+              await resetScramjetStorage();
+              await makeController();
             }
           }
+          await registerSW(); // Ultraviolet service worker (/uv/sw.js)
+          if (hasSJ) await navigator.serviceWorker.register('/sw.js', { scope: '/' }); // Scramjet service worker
+          // A worker that is registered but not yet active can't intercept the first page load,
+          // which then goes to the server as a normal (404) request. Wait until both are active.
+          await waitActive('/uv/service/');
+          if (hasSJ) await waitActive('/scramjet/');
           var wisp = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/';
           var transport = hasSJ ? '/libcurl/index.mjs' : '/epoxy/index.mjs';
           var opts = hasSJ ? [{ websocket: wisp }] : [{ wisp: wisp }];
