@@ -8,10 +8,12 @@
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Space+Grotesk:wght@400;500;600&display=swap">
 
-  <!-- Proxy engine (from Ultraviolet-App; do not remove) -->
-  <script src="baremux/index.js"></script>
-  <script src="uv/uv.bundle.js"></script>
-  <script src="uv/uv.config.js"></script>
+  <!-- Proxy engines (do not remove). Scramjet is optional: if the server has no /scram/ files,
+       the page falls back to Ultraviolet only. -->
+  <script src="/baremux/index.js"></script>
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+  <script src="/scram/scramjet.all.js"></script>
 
   <style>
     :root {
@@ -155,15 +157,10 @@
       <h3>Engine</h3>
       <label for="s-engine">Proxy engine</label>
       <select id="s-engine">
-        <option value="uv">Ultraviolet (opens in these tabs)</option>
-        <option value="sj">Scramjet (opens in a new browser tab)</option>
+        <option value="uv">Ultraviolet</option>
+        <option value="sj">Scramjet</option>
       </select>
-      <p class="hint">Scramjet is a separate server, so it can't open inside these tabs.</p>
-
-      <h3>Scramjet</h3>
-      <label for="s-sj">Scramjet address</label>
-      <input id="s-sj" type="text" placeholder="Automatic: this host on port 8081" spellcheck="false" autocomplete="off">
-      <p class="hint">Leave empty to use this same host on port 8081. Otherwise enter the full address, like https://scram.example.com</p>
+      <p class="hint" id="s-engine-hint">The engine used for the next page you open. Tabs you already have keep the engine they were opened with, so you can mix both.</p>
 
       <h3>Search</h3>
       <label for="s-search">Search engine for typed words</label>
@@ -198,13 +195,13 @@
         <button class="chip" type="button" data-go="https://www.youtube.com/">YouTube</button>
       </div>
       <p class="error" id="error" role="alert"></p>
-      <p class="note">Links that open a new window open as a new tab here. Some sites block proxies or won't load. Use this only where your network's rules allow it. · Powered by <a href="https://github.com/titaniumnetwork-dev/Ultraviolet-App">Ultraviolet</a> · <a href="credits.html">Credits</a></p>
+      <p class="note">Links that open a new window open as a new tab here. Some sites block proxies or won't load. Use this only where your network's rules allow it. · Powered by <a href="https://github.com/titaniumnetwork-dev/Ultraviolet-App">Ultraviolet</a> and <a href="https://github.com/MercuryWorkshop/scramjet">Scramjet</a> · <a href="/credits.html">Credits</a></p>
     </section>
   </main>
 
   <!-- From Ultraviolet-App: registerSW() and search() -->
-  <script src="register-sw.js"></script>
-  <script src="search.js"></script>
+  <script src="/register-sw.js"></script>
+  <script src="/search.js"></script>
 
   <script>
   (function () {
@@ -217,16 +214,30 @@
     var tabsEl = $('tabs'), views = $('views'), home = $('homepage');
     var address = $('address'), errorEl = $('error');
 
-    // ----- Proxy engine setup (same steps as the original index.js) -----
+    // ----- Proxy engine setup -----
+    // Both engines share one connection (bare-mux). With Scramjet present on the server, that
+    // connection uses the libcurl transport for both; otherwise it uses epoxy, like the original app.
+    var hasSJ = typeof $scramjetLoadController === 'function';
     var connection = new BareMux.BareMuxConnection('/baremux/worker.js');
+    var sjController = null;
     var ready = null;
     function ensureReady() {
       if (!ready) {
         ready = (async function () {
-          await registerSW();
+          await registerSW(); // Ultraviolet service worker (/uv/sw.js)
+          if (hasSJ) {
+            await navigator.serviceWorker.register('/sw.js', { scope: '/' }); // Scramjet service worker
+            if (!sjController) {
+              var C = $scramjetLoadController().ScramjetController;
+              sjController = new C({ files: { wasm: '/scram/scramjet.wasm.wasm', all: '/scram/scramjet.all.js', sync: '/scram/scramjet.sync.js' } });
+              await sjController.init();
+            }
+          }
           var wisp = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/';
-          if ((await connection.getTransport()) !== '/epoxy/index.mjs') {
-            await connection.setTransport('/epoxy/index.mjs', [{ wisp: wisp }]);
+          var transport = hasSJ ? '/libcurl/index.mjs' : '/epoxy/index.mjs';
+          var opts = hasSJ ? [{ websocket: wisp }] : [{ wisp: wisp }];
+          if ((await connection.getTransport()) !== transport) {
+            await connection.setTransport(transport, opts);
           }
         })();
         ready.catch(function () { ready = null; });
@@ -249,7 +260,7 @@
     var nextId = 1;
 
     function makeTab(url, activate) {
-      var t = { id: nextId++, url: '', title: 'New tab', frame: null, el: null, loading: false };
+      var t = { id: nextId++, url: '', title: 'New tab', frame: null, sjframe: null, engine: null, el: null, loading: false };
       var el = document.createElement('div');
       el.className = 'tab';
       el.setAttribute('role', 'tab');
@@ -311,8 +322,17 @@
           ' (it needs HTTPS, or localhost).';
         return;
       }
+      var engine = (hasSJ && settings.engine === 'sj') ? 'sj' : 'uv';
+      // A tab that switches engine gets a fresh frame.
+      if (t.frame && t.engine && t.engine !== engine) { t.frame.remove(); t.frame = null; t.sjframe = null; }
       if (!t.frame) {
-        var f = document.createElement('iframe');
+        var f;
+        if (engine === 'sj') {
+          t.sjframe = sjController.createFrame();
+          f = t.sjframe.frame;
+        } else {
+          f = document.createElement('iframe');
+        }
         f.className = 'view';
         f.setAttribute('allow', 'fullscreen; clipboard-read; clipboard-write; autoplay; encrypted-media');
         f.setAttribute('allowfullscreen', '');
@@ -320,11 +340,11 @@
         views.appendChild(f);
         t.frame = f;
       }
-      t.engine = 'uv';
+      t.engine = engine;
       t.url = url;
       t.title = url.replace(/^https?:\/\//, '');
       t.loading = true;
-      t.frame.src = encode(url);
+      if (engine === 'sj') t.sjframe.go(url); else t.frame.src = encode(url);
       if (t === active) select(t); else paint(t);
     }
 
@@ -333,8 +353,14 @@
       if (!t.frame) return;
       try {
         var w = t.frame.contentWindow;
-        var real = decode(w.location.href);
-        if (real) t.url = real;
+        if (t.engine === 'sj') {
+          // Scramjet keeps the real address on its frame object.
+          var su = t.sjframe && t.sjframe.url;
+          if (su) t.url = String(su.href || su);
+        } else {
+          var real = decode(w.location.href);
+          if (real) t.url = real;
+        }
         var title = w.document && w.document.title;
         if (title) t.title = title;
       } catch (e) {}
@@ -401,7 +427,7 @@
     function onFrameLoad(t) {
       t.loading = false;
       $('reload').classList.remove('is-spinning');
-      hook(t);
+      if (t.engine !== 'sj') hook(t); // popup-to-tab handling is written for Ultraviolet frames
       sync(t);
     }
 
@@ -411,7 +437,7 @@
         if (!t.frame) return;
         try {
           var w = t.frame.contentWindow;
-          if (w && !w.__tabsHooked && w.document && w.document.readyState !== 'loading') hook(t);
+          if (t.engine !== 'sj' && w && !w.__tabsHooked && w.document && w.document.readyState !== 'loading') hook(t);
         } catch (e) {}
         sync(t);
       });
@@ -426,20 +452,27 @@
     }
 
     $('back').addEventListener('click', function () {
-      try { active.frame.contentWindow.history.back(); } catch (e) {}
+      try {
+        if (active.engine === 'sj' && active.sjframe && active.sjframe.back) active.sjframe.back();
+        else active.frame.contentWindow.history.back();
+      } catch (e) {}
     });
     $('forward').addEventListener('click', function () {
-      try { active.frame.contentWindow.history.forward(); } catch (e) {}
+      try {
+        if (active.engine === 'sj' && active.sjframe && active.sjframe.forward) active.sjframe.forward();
+        else active.frame.contentWindow.history.forward();
+      } catch (e) {}
     });
     $('reload').addEventListener('click', async function () {
       var t = active;
       if (!t || !t.frame) return;
       if (t.engine === 'sj') {
-        // Scramjet tabs are cross-origin frames: reload by setting the frame address again.
+        // Scramjet tab: use its own reload, or load the current address again.
         t.loading = true; paint(t);
-        var src = t.frame.src;
-        t.frame.src = 'about:blank';
-        setTimeout(function () { t.frame.src = src; }, 50);
+        try {
+          if (t.sjframe && t.sjframe.reload) t.sjframe.reload();
+          else if (t.sjframe && t.url) t.sjframe.go(t.url);
+        } catch (e) {}
         return;
       }
       this.classList.add('is-spinning');
@@ -462,70 +495,37 @@
     $('home').addEventListener('click', function () {
       if (!active || !active.frame) return;
       active.frame.remove(); active.frame = null;
-      active.engine = null;
+      active.sjframe = null; active.engine = null;
       active.url = ''; active.title = 'New tab'; active.loading = false;
       select(active);
     });
     $('newtab').addEventListener('click', function () { makeTab(); });
 
     // ----- Settings: engine (Ultraviolet in these tabs, or Scramjet), Scramjet address, search engine -----
-    var SJ_PORT = 8081; // host port of the scramjet-app container
-    var DEFAULTS = { engine: 'uv', scramjet: '', search: SEARCH };
+    var DEFAULTS = { engine: 'uv', search: SEARCH };
     var settings = Object.assign({}, DEFAULTS);
     try { Object.assign(settings, JSON.parse(localStorage.getItem('proxy:settings') || '{}')); } catch (e) {}
 
-    function scramjetUrl() {
-      var v = (settings.scramjet || '').trim();
-      if (/^https?:\/\//i.test(v)) return v;
-      return location.protocol + '//' + location.hostname + ':' + SJ_PORT + '/';
-    }
-    // Scramjet is a separate server, so a Scramjet tab shows its own start page in a frame.
-    // You type the site into Scramjet's own search box inside the tab.
-    function openScramjet(t) {
-      errorEl.textContent = '';
-      var onCdn = /\.b-cdn\.net$/i.test(location.hostname);
-      if (onCdn && !(settings.scramjet || '').trim()) {
-        errorEl.textContent = 'This address only forwards one port, so Scramjet needs its own address. Open Settings and enter it under "Scramjet address".';
-        openSettings();
-        return;
-      }
-      if (!t.frame) {
-        var f = document.createElement('iframe');
-        f.className = 'view';
-        f.setAttribute('allow', 'fullscreen; clipboard-read; clipboard-write; autoplay; encrypted-media');
-        f.setAttribute('allowfullscreen', '');
-        f.addEventListener('load', function () { t.loading = false; $('reload').classList.remove('is-spinning'); paint(t); });
-        views.appendChild(f);
-        t.frame = f;
-      }
-      t.engine = 'sj';
-      t.url = '';
-      t.title = 'Scramjet';
-      t.loading = true;
-      t.frame.src = scramjetUrl();
-      if (t === active) select(t); else paint(t);
-    }
+    if (!hasSJ) settings.engine = 'uv';
+
     function go(value) {
-      if (settings.engine === 'sj') {
-        // Use this tab if it is empty, otherwise open a new one, so earlier tabs keep their pages.
-        var t = (active && !active.frame) ? active : makeTab(null, true);
-        openScramjet(t);
-        return;
-      }
       if (active) navigate(active, value);
     }
 
     var sheet = $('sheet');
     function openSettings() {
-      $('s-engine').value = settings.engine;
-      $('s-sj').value = settings.scramjet;
+      var sel = $('s-engine');
+      // Scramjet is only offered when the server provides it.
+      sel.querySelector('option[value="sj"]').disabled = !hasSJ;
+      $('s-engine-hint').textContent = hasSJ
+        ? 'The engine used for the next page you open. Tabs you already have keep the engine they were opened with, so you can mix both.'
+        : 'This server only has Ultraviolet. Scramjet is not installed here.';
+      sel.value = settings.engine;
       $('s-search').value = settings.search;
       sheet.hidden = false;
     }
     function saveSettings() {
-      var sj = $('s-sj').value.trim();
-      if (sj && !/^https?:\/\//i.test(sj)) { alert('The Scramjet address must start with http:// or https://'); return; }
-      settings = { engine: $('s-engine').value, scramjet: sj, search: $('s-search').value };
+      settings = { engine: $('s-engine').value, search: $('s-search').value };
       try { localStorage.setItem('proxy:settings', JSON.stringify(settings)); } catch (e) {}
       sheet.hidden = true;
     }
