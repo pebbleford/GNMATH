@@ -1,6 +1,6 @@
 # Proxy setup instructions (for Claude in Chrome)
 
-Hand this file to Claude in Chrome. It sets up the Ultraviolet web proxy on the user's own Oracle Cloud VM, using only the browser.
+Hand this file to Claude in Chrome. It sets up the Scramjet web proxy on the user's own Oracle Cloud VM, using only the browser.
 
 ## Setting it up again
 
@@ -11,7 +11,7 @@ This file can be run again on a machine that already has some of it. Every step 
 
 ## Goal
 
-Run the open-source [Ultraviolet](https://github.com/titaniumnetwork-dev/Ultraviolet-App) and [Scramjet](https://github.com/MercuryWorkshop/scramjet) web proxies together in one Docker container on the user's existing Oracle Cloud Ubuntu VM, with one start page (tabs, engine choice in its Settings, DuckDuckGo search), so the user can reach both from one address.
+Run the open-source [Scramjet](https://github.com/MercuryWorkshop/scramjet) web proxy in one Docker container on the user's existing Oracle Cloud Ubuntu VM, with a tabbed start page (search engine choice in its Settings, DuckDuckGo by default), so the user can reach it from one address.
 
 ## Rules (read first)
 
@@ -49,7 +49,7 @@ sudo systemctl enable --now docker
 ```
 
 ### 4. Get the combined proxy and build it
-The proxy is one server that runs **both Ultraviolet and Scramjet** on port 8080, with a new start page. It lives in the `proxy-server/` folder of the repo `pebbleford/gnmath`. Get or update the repo, then build:
+The proxy is one server that runs **Scramjet** on port 8080, with a tabbed start page. It lives in the `proxy-server/` folder of the repo `pebbleford/gnmath`. Get or update the repo, then build:
 ```sh
 if [ -d ~/gnmath/.git ]; then git -C ~/gnmath pull --ff-only; else git clone --depth 1 https://github.com/pebbleford/gnmath ~/gnmath; fi
 cd ~/gnmath/proxy-server
@@ -83,7 +83,7 @@ sudo netfilter-persistent save
 ```
 
 ### 7. HTTPS (needed for the proxy to work properly)
-Ultraviolet uses service workers, which browsers only allow on HTTPS pages or on `localhost`. Plain `http://<vm-ip>:8080` will most likely not work.
+The proxy uses service workers, which browsers only allow on HTTPS pages or on `localhost`. Plain `http://<vm-ip>:8080` will most likely not work.
 
 **Stop here and ask the user how they want to get HTTPS.** Do not set up any tunnel or public exposure yourself. Common choices are a domain with a certificate in front of the proxy, or running the proxy on their own PC (where `http://localhost:8080` works) instead of the VM. Only continue once the user has chosen and told you exactly what to do.
 
@@ -122,9 +122,9 @@ Say plainly what worked and what did not. Include:
 - anything that failed, with the exact error text.
 
 ## Notes
-- Ultraviolet is GPL-3.0 and its authors no longer maintain it; Scramjet is AGPL-3.0. If the user runs this for other people, they must offer the source.
+- Scramjet is AGPL-3.0. If the user runs this for other people, they must offer the source.
 - This is a separate program from Fern proxy, which is a PostgreSQL data-masking proxy and cannot proxy websites.
-- The combined server was put together by reading the Ultraviolet and Scramjet app code and has not been tested end to end. If one engine fails, try the other and report the exact error.
-- The old containers (`ultraviolet-app`, `scramjet-app`) are replaced by one container, `gnmath-proxy`, on port 8080. Port 8081 is no longer used.
+- The server was put together by reading the Scramjet app code and has not been tested end to end. If it fails, report the exact error.
+- Ultraviolet was removed. The old containers (`ultraviolet-app`, `scramjet-app`) are replaced by one container, `gnmath-proxy`, on port 8080. Port 8081 is no longer used.
 - None of these steps have been run by the author of this file. Expect to troubleshoot.
 

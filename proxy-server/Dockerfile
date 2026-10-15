@@ -1,4 +1,4 @@
-# Ultraviolet + Scramjet on one port (8080).
+# Scramjet proxy server on port 8080.
 #
 #   docker build -t gnmath-proxy .
 #   docker run -d --name gnmath-proxy --restart unless-stopped -p 8080:8080 gnmath-proxy

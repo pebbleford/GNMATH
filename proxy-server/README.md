@@ -1,12 +1,12 @@
-# Proxy server: Ultraviolet and Scramjet on one address
+# Br Br Hub server
 
-One Node server, one port (8080), one start page. Both engines run side by side, so one address (for example one bunny.net pull zone) serves both.
+A small Node server that runs the [Scramjet](https://github.com/MercuryWorkshop/scramjet) web proxy and serves the tabbed start page, all on port 8080.
 
-- **Ultraviolet** and **Scramjet** are both available in the page's tabs. In the page's **Settings** (gear icon), choose which engine the next page uses. Tabs keep the engine they were opened with, so you can mix them.
-- Both engines share one connection to the internet (the libcurl transport).
-- `public/index.html` is a copy of [`../proxy-ui/index.html`](../proxy-ui/index.html). Change that one first, then copy it here.
+- **One engine:** Scramjet. (Ultraviolet was removed. Scramjet handled modern sites, such as NVIDIA's login, that Ultraviolet broke on.)
+- **The page:** tabs, back, forward, reload, an address bar, and a Settings panel (gear icon) for the search engine. `public/index.html` is a copy of [`../proxy-ui/index.html`](../proxy-ui/index.html). Change that one first, then copy it here.
+- **The connection:** the libcurl transport, through a Wisp websocket at `/wisp/`.
 
-**Not tested end to end.** The pieces come from the Ultraviolet-App and Scramjet-App servers and were put together by reading their code. If one engine fails, try the other, and send the error.
+**Not tested end to end.** If something fails, send the error.
 
 ## Run with Docker
 
@@ -21,6 +21,6 @@ Open `http://localhost:8080` (on a server, `http://<ip>:8080`). Press Ctrl+F5 af
 ## Notes
 
 - **HTTPS:** service workers only run on `localhost` or HTTPS, so on a server you need HTTPS in front (for example a bunny.net pull zone with WebSockets on).
-- **Port 8081 isn't used any more.** Everything is on 8080.
-- **Licences:** Ultraviolet is GPL-3.0 and Scramjet is AGPL-3.0. If you run this for other people, you must offer them the source.
+- **Old containers:** if you ran `ultraviolet-app` or `scramjet-app` before, remove them (`docker rm -f ultraviolet-app scramjet-app`). Everything is on 8080 now.
+- **Licence:** Scramjet is AGPL-3.0. If you run this for other people, you must offer them the source.
 - **Datacenter IPs:** some sites and CAPTCHAs work less reliably from a cloud server address.

@@ -9,11 +9,8 @@
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Space+Grotesk:wght@400;500;600&display=swap">
 
-  <!-- Proxy engines (do not remove). Scramjet is optional: if the server has no /scram/ files,
-       the page falls back to Ultraviolet only. -->
+  <!-- Proxy engine (Scramjet). Do not remove. -->
   <script src="/baremux/index.js"></script>
-  <script src="/uv/uv.bundle.js"></script>
-  <script src="/uv/uv.config.js"></script>
   <script src="/scram/scramjet.all.js"></script>
 
   <style>
@@ -83,12 +80,11 @@
         var(--bg);
     }
     .home[hidden] { display: none; }
-    .mark { width: 72px; height: 72px; border-radius: 22px; background: var(--grad); color: #fff;
+    .mark { position: relative; overflow: hidden; width: 72px; height: 72px; border-radius: 22px; background: var(--grad); color: #fff;
             display: grid; place-items: center; font: 800 38px var(--display); margin-bottom: 16px;
             box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset, 0 14px 40px -10px rgba(255,79,216,.8);
             animation: float 4s ease-in-out infinite; }
     @keyframes float { 50% { transform: translateY(-8px) rotate(-4deg); } }
-    .mark { position: relative; overflow: hidden; }
     .mark img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .mark.has-img .sigma { visibility: hidden; }
     .home h1 { margin: 0 0 6px; font: 800 clamp(40px, 8vw, 72px)/1.05 var(--display); letter-spacing: -.02em;
@@ -109,6 +105,7 @@
     .chip { background: rgba(27,18,51,.8); color: var(--text); border: 1px solid var(--line); border-radius: 999px;
             padding: 9px 16px; font-weight: 600; font-size: 14px; cursor: pointer; transition: transform .15s, border-color .15s, background .15s; }
     .chip:hover { background: var(--surface-hi); border-color: var(--accent-2); transform: translateY(-2px); }
+
     /* Settings panel */
     .gear { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--dim); cursor: pointer; flex: none; }
     .gear:hover { background: var(--surface-hi); color: var(--text); }
@@ -118,8 +115,8 @@
     .card h2 { margin: 0 0 4px; font: 800 22px var(--display); }
     .card h3 { margin: 18px 0 6px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
     .card label { display: block; margin: 8px 0 3px; font-size: 13px; color: var(--dim); }
-    .card select, .card input[type=text] { width: 100%; padding: 10px 12px; border-radius: 12px; background: var(--surface); color: var(--text); border: 1px solid var(--line); font: inherit; }
-    .card select:focus, .card input[type=text]:focus { outline: none; border-color: var(--accent-2); }
+    .card select { width: 100%; padding: 10px 12px; border-radius: 12px; background: var(--surface); color: var(--text); border: 1px solid var(--line); font: inherit; }
+    .card select:focus { outline: none; border-color: var(--accent-2); }
     .card .hint { margin: 4px 0 0; font-size: 12.5px; color: var(--faint); }
     .card .row { display: flex; gap: 8px; margin-top: 18px; }
     .card .btn { padding: 10px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 600 14px var(--font); cursor: pointer; }
@@ -158,14 +155,6 @@
       <h2>Br Br Hub settings</h2>
       <p class="hint">Saved in this browser only.</p>
 
-      <h3>Engine</h3>
-      <label for="s-engine">Engine</label>
-      <select id="s-engine">
-        <option value="uv">Ultraviolet</option>
-        <option value="sj">Scramjet</option>
-      </select>
-      <p class="hint" id="s-engine-hint">The engine used for the next page you open. Tabs you already have keep the engine they were opened with, so you can mix both.</p>
-
       <h3>Search</h3>
       <label for="s-search">Search engine for typed words</label>
       <select id="s-search">
@@ -200,38 +189,23 @@
         <button class="chip" type="button" data-go="https://www.youtube.com/">YouTube</button>
       </div>
       <p class="error" id="error" role="alert"></p>
-      <p class="note">Links that open a new window open as a new tab here. Some sites block this or won't load. Use it only where your network's rules allow it. · Powered by <a href="https://github.com/titaniumnetwork-dev/Ultraviolet-App">Ultraviolet</a> and <a href="https://github.com/MercuryWorkshop/scramjet">Scramjet</a> · <a href="/credits.html">Credits</a></p>
+      <p class="note">Some sites block this or won't load. Use it only where your network's rules allow it. · Powered by <a href="https://github.com/MercuryWorkshop/scramjet">Scramjet</a> · <a href="/credits.html">Credits</a></p>
     </section>
   </main>
 
-  <!-- From Ultraviolet-App: search() -->
+  <!-- search(): turns what you type into a web address or a search -->
   <script src="/search.js"></script>
 
   <script>
   (function () {
     'use strict';
     var SEARCH = 'https://duckduckgo.com/?q=%s';
-    var cfg = self.__uv$config;
-    var PREFIX = location.origin + cfg.prefix;
 
     var $ = function (id) { return document.getElementById(id); };
     var tabsEl = $('tabs'), views = $('views'), home = $('homepage');
     var address = $('address'), errorEl = $('error');
 
-    // Start Ultraviolet's service worker (this replaces the separate register-sw.js file).
-    async function registerSW() {
-      if (!navigator.serviceWorker) {
-        throw new Error(location.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)
-          ? 'Service workers cannot be registered without https.'
-          : "Your browser doesn't support service workers.");
-      }
-      await navigator.serviceWorker.register('/uv/sw.js');
-    }
-
-    // ----- Proxy engine setup -----
-    // Both engines share one connection (bare-mux). With Scramjet present on the server, that
-    // connection uses the libcurl transport for both; otherwise it uses epoxy, like the original app.
-    var hasSJ = typeof $scramjetLoadController === 'function';
+    // ----- Engine setup -----
     var connection = new BareMux.BareMuxConnection('/baremux/worker.js');
     var sjController = null;
     var ready = null;
@@ -271,13 +245,22 @@
         }
       } catch (e) {}
     }
+
     function ensureReady() {
       if (!ready) {
         ready = (async function () {
-          if (hasSJ && !sjController) {
-            // Start Scramjet's controller BEFORE registering its service worker (the worker can
-            // otherwise create Scramjet's database half-finished, which causes
-            // "object store not found"). If the database is already broken, delete it and retry once.
+          if (typeof $scramjetLoadController !== 'function') {
+            throw new Error('the engine files are missing on the server');
+          }
+          if (!navigator.serviceWorker) {
+            throw new Error(location.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+              ? 'service workers cannot run without https'
+              : "your browser doesn't support service workers");
+          }
+          if (!sjController) {
+            // Start the controller BEFORE registering the service worker (the worker can otherwise
+            // create the database half-finished, which causes "object store not found").
+            // If the database is already broken, delete it and retry once.
             var C = $scramjetLoadController().ScramjetController;
             var makeController = async function () {
               sjController = new C({ files: { wasm: '/scram/scramjet.wasm.wasm', all: '/scram/scramjet.all.js', sync: '/scram/scramjet.sync.js' } });
@@ -291,31 +274,18 @@
               await makeController();
             }
           }
-          await registerSW(); // Ultraviolet service worker (/uv/sw.js)
-          if (hasSJ) await navigator.serviceWorker.register('/sw.js', { scope: '/' }); // Scramjet service worker
+          await navigator.serviceWorker.register('/sw.js', { scope: '/' });
           // A worker that is registered but not yet active can't intercept the first page load,
-          // which then goes to the server as a normal (404) request. Wait until both are active.
-          await waitActive('/uv/service/');
-          if (hasSJ) await waitActive('/scramjet/');
+          // which would then go to the server as a normal (404) request.
+          await waitActive('/scramjet/');
           var wisp = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/';
-          var transport = hasSJ ? '/libcurl/index.mjs' : '/epoxy/index.mjs';
-          var opts = hasSJ ? [{ websocket: wisp }] : [{ wisp: wisp }];
-          if ((await connection.getTransport()) !== transport) {
-            await connection.setTransport(transport, opts);
+          if ((await connection.getTransport()) !== '/libcurl/index.mjs') {
+            await connection.setTransport('/libcurl/index.mjs', [{ websocket: wisp }]);
           }
         })();
         ready.catch(function () { ready = null; });
       }
       return ready;
-    }
-
-    function encode(url) { return cfg.prefix + cfg.encodeUrl(url); }
-    // Turn a proxied address (…/uv/service/xxxx) back into the real site address.
-    function decode(href) {
-      if (href && href.indexOf(PREFIX) === 0) {
-        try { return cfg.decodeUrl(href.slice(PREFIX.length)); } catch (e) {}
-      }
-      return null;
     }
 
     // ----- Tabs -----
@@ -324,7 +294,7 @@
     var nextId = 1;
 
     function makeTab(url, activate) {
-      var t = { id: nextId++, url: '', title: 'New tab', frame: null, sjframe: null, engine: null, el: null, loading: false };
+      var t = { id: nextId++, url: '', title: 'New tab', frame: null, sjframe: null, el: null, loading: false };
       var el = document.createElement('div');
       el.className = 'tab';
       el.setAttribute('role', 'tab');
@@ -382,50 +352,33 @@
       try {
         await ensureReady();
       } catch (err) {
-        errorEl.textContent = 'Br Br Hub could not start: ' + (err && err.message ? err.message : err) +
-          ' (it needs HTTPS, or localhost).';
+        errorEl.textContent = 'Br Br Hub could not start: ' + (err && err.message ? err.message : err) + '.';
         return;
       }
-      var engine = (hasSJ && settings.engine === 'sj') ? 'sj' : 'uv';
-      // A tab that switches engine gets a fresh frame.
-      if (t.frame && t.engine && t.engine !== engine) { t.frame.remove(); t.frame = null; t.sjframe = null; }
-      if (!t.frame) {
-        var f;
-        if (engine === 'sj') {
-          t.sjframe = sjController.createFrame();
-          f = t.sjframe.frame;
-        } else {
-          f = document.createElement('iframe');
-        }
+      if (!t.sjframe) {
+        t.sjframe = sjController.createFrame();
+        var f = t.sjframe.frame;
         f.className = 'view';
         f.setAttribute('allow', 'fullscreen; clipboard-read; clipboard-write; autoplay; encrypted-media');
-        f.setAttribute('allowfullscreen', '');
         f.addEventListener('load', function () { onFrameLoad(t); });
         views.appendChild(f);
         t.frame = f;
       }
-      t.engine = engine;
       t.url = url;
       t.title = url.replace(/^https?:\/\//, '');
       t.loading = true;
-      if (engine === 'sj') t.sjframe.go(url); else t.frame.src = encode(url);
+      t.sjframe.go(url);
       if (t === active) select(t); else paint(t);
     }
 
-    // Read the real address/title from the page inside the tab (same origin, so this is allowed).
+    // Read the real address and title of the page inside the tab.
     function sync(t) {
       if (!t.frame) return;
       try {
+        var su = t.sjframe && t.sjframe.url;
+        if (su) t.url = String(su.href || su);
         var w = t.frame.contentWindow;
-        if (t.engine === 'sj') {
-          // Scramjet keeps the real address on its frame object.
-          var su = t.sjframe && t.sjframe.url;
-          if (su) t.url = String(su.href || su);
-        } else {
-          var real = decode(w.location.href);
-          if (real) t.url = real;
-        }
-        var title = w.document && w.document.title;
+        var title = w && w.document && w.document.title;
         if (title) t.title = title;
       } catch (e) {}
       paint(t);
@@ -433,79 +386,14 @@
       if (t === active) updateButtons();
     }
 
-    // Resolve a link from inside a tab to a real site address.
-    function toReal(t, href) {
-      if (!href) return '';
-      var base;
-      try { base = t.frame.contentWindow.location.href; } catch (e) { base = location.href; }
-      var abs;
-      try { abs = new URL(href, base).href; } catch (e) { return ''; }
-      var real = decode(abs);
-      if (real) return real;
-      if (abs.indexOf(location.origin + '/') === 0) {
-        // A relative link that resolved against the proxy's own address: resolve it against the real page instead.
-        try { return new URL(href, t.url).href; } catch (e) { return ''; }
-      }
-      return /^https?:/i.test(abs) ? abs : '';
-    }
-
-    function hook(t) {
-      var w;
-      try { w = t.frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }
-      if (w.__tabsHooked) return;
-      w.__tabsHooked = true;
-      // window.open(...) -> new tab inside the proxy
-      try {
-        w.open = function (u) {
-          var real = toReal(t, u);
-          if (real) makeTab(real);
-          return null;
-        };
-      } catch (e) {}
-      // <a target="_blank"> and friends -> new tab; target="_top"/"_parent" -> this tab
-      w.document.addEventListener('click', function (e) {
-        if (e.defaultPrevented || e.button !== 0) return;
-        var a = e.target && e.target.closest && e.target.closest('a[href]');
-        if (!a) return;
-        var target = (a.getAttribute('target') || '').toLowerCase();
-        var newTab = e.ctrlKey || e.metaKey || e.shiftKey || (target && target !== '_self' && target !== '_top' && target !== '_parent');
-        var escapes = target === '_top' || target === '_parent';
-        if (!newTab && !escapes) return;
-        var real = toReal(t, a.href);
-        if (!real) return;
-        e.preventDefault();
-        e.stopPropagation();
-        if (newTab) makeTab(real, !(e.ctrlKey || e.metaKey)); else navigate(t, real);
-      }, true);
-      w.document.addEventListener('auxclick', function (e) {
-        if (e.button !== 1) return;
-        var a = e.target && e.target.closest && e.target.closest('a[href]');
-        if (!a) return;
-        var real = toReal(t, a.href);
-        if (!real) return;
-        e.preventDefault();
-        makeTab(real, false);
-      }, true);
-    }
-
     function onFrameLoad(t) {
       t.loading = false;
       $('reload').classList.remove('is-spinning');
-      if (t.engine !== 'sj') hook(t); // popup-to-tab handling is written for Ultraviolet frames
       sync(t);
     }
 
     // Keep the address bar and tab titles fresh (sites change them without reloading).
-    setInterval(function () {
-      tabs.forEach(function (t) {
-        if (!t.frame) return;
-        try {
-          var w = t.frame.contentWindow;
-          if (t.engine !== 'sj' && w && !w.__tabsHooked && w.document && w.document.readyState !== 'loading') hook(t);
-        } catch (e) {}
-        sync(t);
-      });
-    }, 800);
+    setInterval(function () { tabs.forEach(sync); }, 800);
 
     // ----- Toolbar -----
     function updateButtons() {
@@ -517,79 +405,48 @@
 
     $('back').addEventListener('click', function () {
       try {
-        if (active.engine === 'sj' && active.sjframe && active.sjframe.back) active.sjframe.back();
+        if (active.sjframe && active.sjframe.back) active.sjframe.back();
         else active.frame.contentWindow.history.back();
       } catch (e) {}
     });
     $('forward').addEventListener('click', function () {
       try {
-        if (active.engine === 'sj' && active.sjframe && active.sjframe.forward) active.sjframe.forward();
+        if (active.sjframe && active.sjframe.forward) active.sjframe.forward();
         else active.frame.contentWindow.history.forward();
       } catch (e) {}
     });
-    $('reload').addEventListener('click', async function () {
+    $('reload').addEventListener('click', function () {
       var t = active;
-      if (!t || !t.frame) return;
-      if (t.engine === 'sj') {
-        // Scramjet tab: use its own reload, or load the current address again.
-        t.loading = true; paint(t);
-        try {
-          if (t.sjframe && t.sjframe.reload) t.sjframe.reload();
-          else if (t.sjframe && t.url) t.sjframe.go(t.url);
-        } catch (e) {}
-        return;
-      }
+      if (!t || !t.sjframe) return;
       this.classList.add('is-spinning');
       t.loading = true; paint(t);
-      try { await ensureReady(); } catch (e) {}
-      // Reload the page the tab is on right now, through the proxy (not the first page it opened).
-      var current = t.url;
       try {
-        var real = decode(t.frame.contentWindow.location.href);
-        if (real) current = real;
+        if (t.sjframe.reload) t.sjframe.reload();
+        else if (t.url) t.sjframe.go(t.url);
       } catch (e) {}
-      if (current) {
-        var target = encode(current);
-        // location.replace() reloads even when the address is unchanged, without adding a history entry.
-        try { t.frame.contentWindow.location.replace(target); } catch (e) { t.frame.src = target; }
-      }
       var btn = this;
       setTimeout(function () { btn.classList.remove('is-spinning'); }, 8000);
     });
     $('home').addEventListener('click', function () {
       if (!active || !active.frame) return;
-      active.frame.remove(); active.frame = null;
-      active.sjframe = null; active.engine = null;
+      active.frame.remove(); active.frame = null; active.sjframe = null;
       active.url = ''; active.title = 'New tab'; active.loading = false;
       select(active);
     });
     $('newtab').addEventListener('click', function () { makeTab(); });
 
-    // ----- Settings: engine (Ultraviolet in these tabs, or Scramjet), Scramjet address, search engine -----
-    var DEFAULTS = { engine: 'uv', search: SEARCH };
+    // ----- Settings -----
+    var DEFAULTS = { search: SEARCH };
     var settings = Object.assign({}, DEFAULTS);
     try { Object.assign(settings, JSON.parse(localStorage.getItem('proxy:settings') || '{}')); } catch (e) {}
 
-    if (!hasSJ) settings.engine = 'uv';
-
-    function go(value) {
-      if (active) navigate(active, value);
-    }
-
     var sheet = $('sheet');
     function openSettings() {
-      var sel = $('s-engine');
-      // Scramjet is only offered when the server provides it.
-      sel.querySelector('option[value="sj"]').disabled = !hasSJ;
-      $('s-engine-hint').textContent = hasSJ
-        ? 'The engine used for the next page you open. Tabs you already have keep the engine they were opened with, so you can mix both.'
-        : 'This server only has Ultraviolet. Scramjet is not installed here.';
-      sel.value = settings.engine;
       $('s-search').value = settings.search;
       sheet.hidden = false;
     }
     function saveSettings() {
-      settings = { engine: $('s-engine').value, search: $('s-search').value };
+      settings = { search: $('s-search').value };
       try { localStorage.setItem('proxy:settings', JSON.stringify(settings)); } catch (e) {}
       sheet.hidden = true;
     }
@@ -603,6 +460,8 @@
     });
     sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.hidden = true; });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sheet.hidden = true; });
+
+    function go(value) { if (active) navigate(active, value); }
 
     $('omni').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -633,7 +492,7 @@
 
     makeTab();
     ensureReady().catch(function (err) {
-      errorEl.textContent = 'Br Br Hub could not start: ' + (err && err.message ? err.message : err) + ' (it needs HTTPS, or localhost).';
+      errorEl.textContent = 'Br Br Hub could not start: ' + (err && err.message ? err.message : err) + '.';
     });
   })();
   </script>
