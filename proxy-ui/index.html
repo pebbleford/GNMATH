@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Proxy</title>
+  <title>Br Br Hub</title>
   <meta name="theme-color" content="#0b0716">
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Space+Grotesk:wght@400;500;600&display=swap">
@@ -150,12 +150,12 @@
   </div>
 
   <div class="sheet" id="sheet" hidden>
-    <div class="card" role="dialog" aria-modal="true" aria-label="Proxy settings">
-      <h2>Proxy settings</h2>
+    <div class="card" role="dialog" aria-modal="true" aria-label="Br Br Hub settings">
+      <h2>Br Br Hub settings</h2>
       <p class="hint">Saved in this browser only.</p>
 
       <h3>Engine</h3>
-      <label for="s-engine">Proxy engine</label>
+      <label for="s-engine">Engine</label>
       <select id="s-engine">
         <option value="uv">Ultraviolet</option>
         <option value="sj">Scramjet</option>
@@ -182,7 +182,7 @@
   <main class="views" id="views">
     <section class="home" id="homepage">
       <div class="mark" aria-hidden="true">&sum;</div>
-      <h1>Proxy</h1>
+      <h1>Br Br Hub</h1>
       <p class="sub">Type a website or search.</p>
       <form id="homeform" autocomplete="off">
         <input id="homeinput" type="text" placeholder="Search or enter a website" aria-label="Search or enter a website" spellcheck="false">
@@ -195,7 +195,7 @@
         <button class="chip" type="button" data-go="https://www.youtube.com/">YouTube</button>
       </div>
       <p class="error" id="error" role="alert"></p>
-      <p class="note">Links that open a new window open as a new tab here. Some sites block proxies or won't load. Use this only where your network's rules allow it. · Powered by <a href="https://github.com/titaniumnetwork-dev/Ultraviolet-App">Ultraviolet</a> and <a href="https://github.com/MercuryWorkshop/scramjet">Scramjet</a> · <a href="/credits.html">Credits</a></p>
+      <p class="note">Links that open a new window open as a new tab here. Some sites block this or won't load. Use it only where your network's rules allow it. · Powered by <a href="https://github.com/titaniumnetwork-dev/Ultraviolet-App">Ultraviolet</a> and <a href="https://github.com/MercuryWorkshop/scramjet">Scramjet</a> · <a href="/credits.html">Credits</a></p>
     </section>
   </main>
 
@@ -368,7 +368,7 @@
       try {
         await ensureReady();
       } catch (err) {
-        errorEl.textContent = 'The proxy could not start: ' + (err && err.message ? err.message : err) +
+        errorEl.textContent = 'Br Br Hub could not start: ' + (err && err.message ? err.message : err) +
           ' (it needs HTTPS, or localhost).';
         return;
       }
@@ -619,7 +619,7 @@
 
     makeTab();
     ensureReady().catch(function (err) {
-      errorEl.textContent = 'The proxy could not start: ' + (err && err.message ? err.message : err) + ' (it needs HTTPS, or localhost).';
+      errorEl.textContent = 'Br Br Hub could not start: ' + (err && err.message ? err.message : err) + ' (it needs HTTPS, or localhost).';
     });
   })();
   </script>
