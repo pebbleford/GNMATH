@@ -204,8 +204,7 @@
     </section>
   </main>
 
-  <!-- From Ultraviolet-App: registerSW() and search() -->
-  <script src="/register-sw.js"></script>
+  <!-- From Ultraviolet-App: search() -->
   <script src="/search.js"></script>
 
   <script>
@@ -218,6 +217,16 @@
     var $ = function (id) { return document.getElementById(id); };
     var tabsEl = $('tabs'), views = $('views'), home = $('homepage');
     var address = $('address'), errorEl = $('error');
+
+    // Start Ultraviolet's service worker (this replaces the separate register-sw.js file).
+    async function registerSW() {
+      if (!navigator.serviceWorker) {
+        throw new Error(location.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+          ? 'Service workers cannot be registered without https.'
+          : "Your browser doesn't support service workers.");
+      }
+      await navigator.serviceWorker.register('/uv/sw.js');
+    }
 
     // ----- Proxy engine setup -----
     // Both engines share one connection (bare-mux). With Scramjet present on the server, that
