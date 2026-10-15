@@ -320,6 +320,7 @@
         views.appendChild(f);
         t.frame = f;
       }
+      t.engine = 'uv';
       t.url = url;
       t.title = url.replace(/^https?:\/\//, '');
       t.loading = true;
@@ -433,6 +434,14 @@
     $('reload').addEventListener('click', async function () {
       var t = active;
       if (!t || !t.frame) return;
+      if (t.engine === 'sj') {
+        // Scramjet tabs are cross-origin frames: reload by setting the frame address again.
+        t.loading = true; paint(t);
+        var src = t.frame.src;
+        t.frame.src = 'about:blank';
+        setTimeout(function () { t.frame.src = src; }, 50);
+        return;
+      }
       this.classList.add('is-spinning');
       t.loading = true; paint(t);
       try { await ensureReady(); } catch (e) {}
@@ -453,6 +462,7 @@
     $('home').addEventListener('click', function () {
       if (!active || !active.frame) return;
       active.frame.remove(); active.frame = null;
+      active.engine = null;
       active.url = ''; active.title = 'New tab'; active.loading = false;
       select(active);
     });
@@ -469,9 +479,37 @@
       if (/^https?:\/\//i.test(v)) return v;
       return location.protocol + '//' + location.hostname + ':' + SJ_PORT + '/';
     }
+    // Scramjet is a separate server, so a Scramjet tab shows its own start page in a frame.
+    // You type the site into Scramjet's own search box inside the tab.
+    function openScramjet(t) {
+      errorEl.textContent = '';
+      var onCdn = /\.b-cdn\.net$/i.test(location.hostname);
+      if (onCdn && !(settings.scramjet || '').trim()) {
+        errorEl.textContent = 'This address only forwards one port, so Scramjet needs its own address. Open Settings and enter it under "Scramjet address".';
+        openSettings();
+        return;
+      }
+      if (!t.frame) {
+        var f = document.createElement('iframe');
+        f.className = 'view';
+        f.setAttribute('allow', 'fullscreen; clipboard-read; clipboard-write; autoplay; encrypted-media');
+        f.setAttribute('allowfullscreen', '');
+        f.addEventListener('load', function () { t.loading = false; $('reload').classList.remove('is-spinning'); paint(t); });
+        views.appendChild(f);
+        t.frame = f;
+      }
+      t.engine = 'sj';
+      t.url = '';
+      t.title = 'Scramjet';
+      t.loading = true;
+      t.frame.src = scramjetUrl();
+      if (t === active) select(t); else paint(t);
+    }
     function go(value) {
       if (settings.engine === 'sj') {
-        window.open(scramjetUrl(), '_blank', 'noopener');
+        // Use this tab if it is empty, otherwise open a new one, so earlier tabs keep their pages.
+        var t = (active && !active.frame) ? active : makeTab(null, true);
+        openScramjet(t);
         return;
       }
       if (active) navigate(active, value);
