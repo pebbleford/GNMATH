@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Br Br Hub</title>
   <meta name="theme-color" content="#0b0716">
-  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" href="/brr.png">
+  <link rel="shortcut icon" href="/favicon.ico">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Space+Grotesk:wght@400;500;600&display=swap">
 
   <!-- Proxy engines (do not remove). Scramjet is optional: if the server has no /scram/ files,
@@ -87,6 +88,9 @@
             box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset, 0 14px 40px -10px rgba(255,79,216,.8);
             animation: float 4s ease-in-out infinite; }
     @keyframes float { 50% { transform: translateY(-8px) rotate(-4deg); } }
+    .mark { position: relative; overflow: hidden; }
+    .mark img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .mark.has-img .sigma { visibility: hidden; }
     .home h1 { margin: 0 0 6px; font: 800 clamp(40px, 8vw, 72px)/1.05 var(--display); letter-spacing: -.02em;
          background: linear-gradient(100deg, #fff 5%, var(--accent) 40%, var(--accent-2) 70%, var(--accent-3));
          -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -181,7 +185,8 @@
 
   <main class="views" id="views">
     <section class="home" id="homepage">
-      <div class="mark" aria-hidden="true">&sum;</div>
+      <!-- Logo: shows /brr.png when that file exists on the server, otherwise the sigma -->
+      <div class="mark" id="mark" aria-hidden="true"><span class="sigma">&sum;</span><img id="markimg" src="/brr.png" alt="" onload="document.getElementById('mark').classList.add('has-img')" onerror="this.remove()"></div>
       <h1>Br Br Hub</h1>
       <p class="sub">Type a website or search.</p>
       <form id="homeform" autocomplete="off">
