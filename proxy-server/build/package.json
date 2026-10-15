@@ -1,0 +1,10 @@
+{
+	"name": "gnmath-proxy-build",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Build-time tools (not part of the running server)",
+	"dependencies": {
+		"javascript-obfuscator": "^4.1.1"
+	}
+}
