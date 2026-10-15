@@ -344,6 +344,105 @@ svg .fill { fill: currentColor; stroke: none; }
 }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 
+/* =====================================================================
+   Neon theme: brighter colors, gradients and glow. Layout is unchanged;
+   delete this block to go back to the original look.
+   ===================================================================== */
+:root {
+  --bg: #0b0716;
+  --bg-raise: #140d26;
+  --surface: #1b1233;
+  --surface-hi: #261a46;
+  --line: #34255c;
+  --line-soft: rgba(190, 140, 255, 0.06);
+  --text: #f4efff;
+  --text-dim: #b9acd9;
+  --text-faint: #8676ad;
+  --accent: #b36bff;
+  --accent-2: #ff4fd8;
+  --accent-3: #33e6ff;
+  --accent-ink: #12051f;
+  --accent-soft: rgba(179, 107, 255, 0.22);
+  --star: #ffe14d;
+  --grad: linear-gradient(120deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
+  --radius: 18px;
+  --radius-sm: 12px;
+  --display: "Rubik", var(--font);
+}
+
+body {
+  background-image:
+    radial-gradient(900px 520px at 10% -10%, rgba(179, 107, 255, 0.22), transparent 70%),
+    radial-gradient(800px 500px at 95% 5%, rgba(255, 79, 216, 0.16), transparent 70%),
+    radial-gradient(900px 600px at 50% 110%, rgba(51, 230, 255, 0.10), transparent 70%),
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: auto, auto, auto, 32px 32px, 32px 32px;
+}
+
+/* Top bar */
+.topbar { background: rgba(11, 7, 22, 0.78); border-bottom-color: rgba(179, 107, 255, .25); }
+.brand__mark {
+  background: var(--grad); color: #fff; border-radius: 12px;
+  font-family: var(--display); font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset, 0 8px 26px -6px rgba(255, 79, 216, .7);
+  animation: wiggle 6s ease-in-out infinite;
+}
+@keyframes wiggle { 0%, 92%, 100% { transform: rotate(0); } 94% { transform: rotate(-10deg); } 96% { transform: rotate(8deg); } 98% { transform: rotate(-4deg); } }
+.brand__name {
+  font-family: var(--display); font-weight: 800; letter-spacing: .02em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.search input { border-radius: 999px; background: rgba(27, 18, 51, .85); }
+.search input:focus { border-color: var(--accent-2); box-shadow: 0 0 0 4px rgba(255, 79, 216, .18); }
+
+.btn { border-radius: 999px; }
+.btn--accent {
+  background: var(--grad); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  box-shadow: 0 8px 22px -8px rgba(255, 79, 216, .8);
+}
+.btn--accent:hover { background: var(--grad); filter: brightness(1.12) saturate(1.1); transform: translateY(-1px); }
+
+/* Hero */
+.hero { padding-top: 48px; }
+.hero h1 {
+  font-family: var(--display); font-weight: 800; font-size: clamp(36px, 6.4vw, 68px); letter-spacing: -.02em;
+  background: linear-gradient(100deg, #fff 10%, var(--accent) 45%, var(--accent-2) 70%, var(--accent-3));
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shine 8s ease-in-out infinite alternate;
+}
+@keyframes shine { to { background-position: 100% 0; } }
+.hero__sub .mono { color: var(--accent-3); }
+
+.shelf h2, .browse h2 { font-family: var(--display); font-weight: 800; font-size: 22px; }
+
+/* Category chips */
+.chip { border-color: var(--line); background: rgba(27, 18, 51, .8); }
+.chip:hover { color: var(--text); border-color: var(--accent); transform: translateY(-1px); }
+.chip[aria-pressed="true"] {
+  background: var(--grad); color: #fff; box-shadow: 0 6px 18px -8px rgba(255, 79, 216, .9);
+}
+.chip { transition: background .15s, color .15s, border-color .15s, transform .15s var(--ease); }
+
+/* Game cards: glowing gradient frame and a little pop on hover */
+.card__art { box-shadow: 0 0 0 1px var(--line), 0 10px 24px -16px rgba(0,0,0,.9); }
+.card__link:hover .card__art,
+.card__link:focus-visible .card__art {
+  transform: translateY(-6px) rotate(-1.2deg) scale(1.02);
+  box-shadow: 0 0 0 2px var(--accent-2), 0 0 26px -4px rgba(255, 79, 216, .6), 0 18px 34px -14px rgba(0,0,0,.9);
+}
+.card:nth-child(even) .card__link:hover .card__art { transform: translateY(-6px) rotate(1.2deg) scale(1.02); }
+.card__ph { background: linear-gradient(135deg, #2c1b52, #1b1233 60%, #13213a); color: var(--accent); }
+.card__tag { background: var(--grad); color: #fff; border-radius: 999px; }
+.card__title { font-weight: 700; }
+
+/* Player, spinner, toast */
+.player__bar { background: var(--bg-raise); border-bottom-color: rgba(179, 107, 255, .3); }
+.spinner { border-top-color: var(--accent-2); border-right-color: var(--accent-3); }
+.toast { border-radius: 999px; border-color: var(--accent); }
+.footer a:hover { color: var(--accent-2); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

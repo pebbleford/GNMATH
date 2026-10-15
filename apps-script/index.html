@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>GNMATH</title>
   <meta name="description" content="Hundreds of free browser games: ports, Flash classics, emulators and more, powered by the gn-math library.">
-  <meta name="theme-color" content="#0a0d12">
+  <meta name="theme-color" content="#0b0716">
   
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Rubik:wght@600;800&family=Space+Grotesk:wght@400;500;600;700&display=swap">
   <style>
 :root {
   --bg: #0a0d12;
@@ -357,6 +357,105 @@ svg .fill { fill: currentColor; stroke: none; }
   font-size: 14px; transition: opacity .2s, transform .2s var(--ease);
 }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* =====================================================================
+   Neon theme: brighter colors, gradients and glow. Layout is unchanged;
+   delete this block to go back to the original look.
+   ===================================================================== */
+:root {
+  --bg: #0b0716;
+  --bg-raise: #140d26;
+  --surface: #1b1233;
+  --surface-hi: #261a46;
+  --line: #34255c;
+  --line-soft: rgba(190, 140, 255, 0.06);
+  --text: #f4efff;
+  --text-dim: #b9acd9;
+  --text-faint: #8676ad;
+  --accent: #b36bff;
+  --accent-2: #ff4fd8;
+  --accent-3: #33e6ff;
+  --accent-ink: #12051f;
+  --accent-soft: rgba(179, 107, 255, 0.22);
+  --star: #ffe14d;
+  --grad: linear-gradient(120deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
+  --radius: 18px;
+  --radius-sm: 12px;
+  --display: "Rubik", var(--font);
+}
+
+body {
+  background-image:
+    radial-gradient(900px 520px at 10% -10%, rgba(179, 107, 255, 0.22), transparent 70%),
+    radial-gradient(800px 500px at 95% 5%, rgba(255, 79, 216, 0.16), transparent 70%),
+    radial-gradient(900px 600px at 50% 110%, rgba(51, 230, 255, 0.10), transparent 70%),
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: auto, auto, auto, 32px 32px, 32px 32px;
+}
+
+/* Top bar */
+.topbar { background: rgba(11, 7, 22, 0.78); border-bottom-color: rgba(179, 107, 255, .25); }
+.brand__mark {
+  background: var(--grad); color: #fff; border-radius: 12px;
+  font-family: var(--display); font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset, 0 8px 26px -6px rgba(255, 79, 216, .7);
+  animation: wiggle 6s ease-in-out infinite;
+}
+@keyframes wiggle { 0%, 92%, 100% { transform: rotate(0); } 94% { transform: rotate(-10deg); } 96% { transform: rotate(8deg); } 98% { transform: rotate(-4deg); } }
+.brand__name {
+  font-family: var(--display); font-weight: 800; letter-spacing: .02em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.search input { border-radius: 999px; background: rgba(27, 18, 51, .85); }
+.search input:focus { border-color: var(--accent-2); box-shadow: 0 0 0 4px rgba(255, 79, 216, .18); }
+
+.btn { border-radius: 999px; }
+.btn--accent {
+  background: var(--grad); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25);
+  box-shadow: 0 8px 22px -8px rgba(255, 79, 216, .8);
+}
+.btn--accent:hover { background: var(--grad); filter: brightness(1.12) saturate(1.1); transform: translateY(-1px); }
+
+/* Hero */
+.hero { padding-top: 48px; }
+.hero h1 {
+  font-family: var(--display); font-weight: 800; font-size: clamp(36px, 6.4vw, 68px); letter-spacing: -.02em;
+  background: linear-gradient(100deg, #fff 10%, var(--accent) 45%, var(--accent-2) 70%, var(--accent-3));
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shine 8s ease-in-out infinite alternate;
+}
+@keyframes shine { to { background-position: 100% 0; } }
+.hero__sub .mono { color: var(--accent-3); }
+
+.shelf h2, .browse h2 { font-family: var(--display); font-weight: 800; font-size: 22px; }
+
+/* Category chips */
+.chip { border-color: var(--line); background: rgba(27, 18, 51, .8); }
+.chip:hover { color: var(--text); border-color: var(--accent); transform: translateY(-1px); }
+.chip[aria-pressed="true"] {
+  background: var(--grad); color: #fff; box-shadow: 0 6px 18px -8px rgba(255, 79, 216, .9);
+}
+.chip { transition: background .15s, color .15s, border-color .15s, transform .15s var(--ease); }
+
+/* Game cards: glowing gradient frame and a little pop on hover */
+.card__art { box-shadow: 0 0 0 1px var(--line), 0 10px 24px -16px rgba(0,0,0,.9); }
+.card__link:hover .card__art,
+.card__link:focus-visible .card__art {
+  transform: translateY(-6px) rotate(-1.2deg) scale(1.02);
+  box-shadow: 0 0 0 2px var(--accent-2), 0 0 26px -4px rgba(255, 79, 216, .6), 0 18px 34px -14px rgba(0,0,0,.9);
+}
+.card:nth-child(even) .card__link:hover .card__art { transform: translateY(-6px) rotate(1.2deg) scale(1.02); }
+.card__ph { background: linear-gradient(135deg, #2c1b52, #1b1233 60%, #13213a); color: var(--accent); }
+.card__tag { background: var(--grad); color: #fff; border-radius: 999px; }
+.card__title { font-weight: 700; }
+
+/* Player, spinner, toast */
+.player__bar { background: var(--bg-raise); border-bottom-color: rgba(179, 107, 255, .3); }
+.spinner { border-top-color: var(--accent-2); border-right-color: var(--accent-3); }
+.toast { border-radius: 999px; border-color: var(--accent); }
+.footer a:hover { color: var(--accent-2); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -1319,7 +1418,7 @@ svg .fill { fill: currentColor; stroke: none; }
   // ---- UI -----------------------------------------------------------------
   const css = document.createElement('style');
   css.textContent = `
-  .xt-btn{position:fixed;right:14px;bottom:14px;z-index:60;border:1px solid var(--line,#333);background:var(--surface,#151b25);color:var(--text,#fff);border-radius:999px;padding:10px 16px;font:600 14px system-ui;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+  .xt-btn{position:fixed;right:14px;bottom:14px;z-index:60;border:0;background:var(--grad,var(--surface,#151b25));color:#fff;border-radius:999px;padding:10px 16px;font:600 14px system-ui;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.4)}
   .xt-panel{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
   .xt-panel[hidden]{display:none}
   .xt-card{background:var(--bg-raise,#11161e);color:var(--text,#fff);border:1px solid var(--line,#333);width:min(560px,100%);max-height:90vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px 28px;font:15px/1.5 system-ui}
@@ -1330,9 +1429,9 @@ svg .fill { fill: currentColor; stroke: none; }
   .xt-card input[type=color]{padding:2px;height:40px}
   .xt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .xt-card button{border:1px solid var(--line,#333);background:var(--surface-hi,#1c2431);color:var(--text,#fff);border-radius:8px;padding:9px 14px;font:600 14px system-ui;cursor:pointer}
-  .xt-card button.xt-main{background:var(--accent,#6cf0b0);color:var(--accent-ink,#052618);border-color:transparent}
+  .xt-card button.xt-main{background:var(--accent,#b36bff);color:var(--accent-ink,#052618);border-color:transparent}
   .xt-note{font-size:13px;color:var(--text-dim,#9aa);margin:4px 0 0}
-  .xt-card a{color:var(--accent,#6cf0b0)}`;
+  .xt-card a{color:var(--accent,#b36bff)}`;
   document.head.appendChild(css);
 
   const btn = document.createElement('button');
@@ -1357,7 +1456,7 @@ svg .fill { fill: currentColor; stroke: none; }
     <label for="xt-name">Site name in the header</label>
     <input id="xt-name" type="text" placeholder="GNMATH" autocomplete="off">
     <label for="xt-accent">Accent color</label>
-    <input id="xt-accent" type="color" value="#6cf0b0">
+    <input id="xt-accent" type="color" value="#b36bff">
 
     <h3>Web proxy</h3>
     <label for="xt-proxy">Proxy address (opened by the Proxy button)</label>
@@ -1398,7 +1497,7 @@ svg .fill { fill: currentColor; stroke: none; }
     const sel = $('xt-preset'); sel.replaceChildren();
     Object.entries(PRESETS).forEach(([k, p]) => { const o = document.createElement('option'); o.value = k; o.textContent = p.label; sel.appendChild(o); });
     sel.value = cfg.preset; $('xt-title').value = cfg.title; $('xt-icon').value = cfg.icon;
-    $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#6cf0b0';
+    $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#b36bff';
     $('xt-proxy').value = cfg.proxyUrl; $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
   }
   const open = () => { fill(); renderLinks(); panel.hidden = false; };

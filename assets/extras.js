@@ -82,7 +82,7 @@
   // ---- UI -----------------------------------------------------------------
   const css = document.createElement('style');
   css.textContent = `
-  .xt-btn{position:fixed;right:14px;bottom:14px;z-index:60;border:1px solid var(--line,#333);background:var(--surface,#151b25);color:var(--text,#fff);border-radius:999px;padding:10px 16px;font:600 14px system-ui;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+  .xt-btn{position:fixed;right:14px;bottom:14px;z-index:60;border:0;background:var(--grad,var(--surface,#151b25));color:#fff;border-radius:999px;padding:10px 16px;font:600 14px system-ui;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.4)}
   .xt-panel{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
   .xt-panel[hidden]{display:none}
   .xt-card{background:var(--bg-raise,#11161e);color:var(--text,#fff);border:1px solid var(--line,#333);width:min(560px,100%);max-height:90vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px 28px;font:15px/1.5 system-ui}
@@ -93,9 +93,9 @@
   .xt-card input[type=color]{padding:2px;height:40px}
   .xt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .xt-card button{border:1px solid var(--line,#333);background:var(--surface-hi,#1c2431);color:var(--text,#fff);border-radius:8px;padding:9px 14px;font:600 14px system-ui;cursor:pointer}
-  .xt-card button.xt-main{background:var(--accent,#6cf0b0);color:var(--accent-ink,#052618);border-color:transparent}
+  .xt-card button.xt-main{background:var(--accent,#b36bff);color:var(--accent-ink,#052618);border-color:transparent}
   .xt-note{font-size:13px;color:var(--text-dim,#9aa);margin:4px 0 0}
-  .xt-card a{color:var(--accent,#6cf0b0)}`;
+  .xt-card a{color:var(--accent,#b36bff)}`;
   document.head.appendChild(css);
 
   const btn = document.createElement('button');
@@ -120,7 +120,7 @@
     <label for="xt-name">Site name in the header</label>
     <input id="xt-name" type="text" placeholder="GNMATH" autocomplete="off">
     <label for="xt-accent">Accent color</label>
-    <input id="xt-accent" type="color" value="#6cf0b0">
+    <input id="xt-accent" type="color" value="#b36bff">
 
     <h3>Web proxy</h3>
     <label for="xt-proxy">Proxy address (opened by the Proxy button)</label>
@@ -161,7 +161,7 @@
     const sel = $('xt-preset'); sel.replaceChildren();
     Object.entries(PRESETS).forEach(([k, p]) => { const o = document.createElement('option'); o.value = k; o.textContent = p.label; sel.appendChild(o); });
     sel.value = cfg.preset; $('xt-title').value = cfg.title; $('xt-icon').value = cfg.icon;
-    $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#6cf0b0';
+    $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#b36bff';
     $('xt-proxy').value = cfg.proxyUrl; $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
   }
   const open = () => { fill(); renderLinks(); panel.hidden = false; };
