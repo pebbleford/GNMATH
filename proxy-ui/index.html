@@ -103,9 +103,21 @@
     .chip { background: rgba(27,18,51,.8); color: var(--text); border: 1px solid var(--line); border-radius: 999px;
             padding: 9px 16px; font-weight: 600; font-size: 14px; cursor: pointer; transition: transform .15s, border-color .15s, background .15s; }
     .chip:hover { background: var(--surface-hi); border-color: var(--accent-2); transform: translateY(-2px); }
-    .engine { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--dim); font-size: 14px; }
-    .engine select { background: rgba(27,18,51,.85); color: var(--text); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font: inherit; cursor: pointer; }
-    .engine select:focus { outline: none; border-color: var(--accent-2); }
+    /* Settings panel */
+    .gear { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--dim); cursor: pointer; flex: none; }
+    .gear:hover { background: var(--surface-hi); color: var(--text); }
+    .sheet { position: fixed; inset: 0; z-index: 30; background: rgba(5,3,12,.65); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .sheet[hidden] { display: none; }
+    .card { width: min(480px, 100%); max-height: 90vh; overflow: auto; padding: 20px; border-radius: 20px; background: var(--bg-raise); border: 1px solid var(--line); box-shadow: 0 30px 80px -20px rgba(0,0,0,.9); }
+    .card h2 { margin: 0 0 4px; font: 800 22px var(--display); }
+    .card h3 { margin: 18px 0 6px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
+    .card label { display: block; margin: 8px 0 3px; font-size: 13px; color: var(--dim); }
+    .card select, .card input[type=text] { width: 100%; padding: 10px 12px; border-radius: 12px; background: var(--surface); color: var(--text); border: 1px solid var(--line); font: inherit; }
+    .card select:focus, .card input[type=text]:focus { outline: none; border-color: var(--accent-2); }
+    .card .hint { margin: 4px 0 0; font-size: 12.5px; color: var(--faint); }
+    .card .row { display: flex; gap: 8px; margin-top: 18px; }
+    .card .btn { padding: 10px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 600 14px var(--font); cursor: pointer; }
+    .card .btn.main { background: var(--grad); border-color: transparent; color: #fff; }
     .error { color: var(--danger); min-height: 1.4em; margin: 18px 0 0; max-width: 660px; }
     .note { margin-top: 26px; font-size: 13px; color: var(--faint); max-width: 520px; }
     .note a { color: var(--dim); }
@@ -132,6 +144,42 @@
     <form class="omni" id="omni" autocomplete="off">
       <input id="address" type="text" placeholder="Search or enter a website" aria-label="Address" spellcheck="false">
     </form>
+    <button class="gear" id="gear" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </div>
+
+  <div class="sheet" id="sheet" hidden>
+    <div class="card" role="dialog" aria-modal="true" aria-label="Proxy settings">
+      <h2>Proxy settings</h2>
+      <p class="hint">Saved in this browser only.</p>
+
+      <h3>Engine</h3>
+      <label for="s-engine">Proxy engine</label>
+      <select id="s-engine">
+        <option value="uv">Ultraviolet (opens in these tabs)</option>
+        <option value="sj">Scramjet (opens in a new browser tab)</option>
+      </select>
+      <p class="hint">Scramjet is a separate server, so it can't open inside these tabs.</p>
+
+      <h3>Scramjet</h3>
+      <label for="s-sj">Scramjet address</label>
+      <input id="s-sj" type="text" placeholder="Automatic: this host on port 8081" spellcheck="false" autocomplete="off">
+      <p class="hint">Leave empty to use this same host on port 8081. Otherwise enter the full address, like https://scram.example.com</p>
+
+      <h3>Search</h3>
+      <label for="s-search">Search engine for typed words</label>
+      <select id="s-search">
+        <option value="https://duckduckgo.com/?q=%s">DuckDuckGo</option>
+        <option value="https://www.bing.com/search?q=%s">Bing</option>
+        <option value="https://search.brave.com/search?q=%s">Brave Search</option>
+        <option value="https://www.google.com/search?q=%s">Google (often shows a robot check)</option>
+      </select>
+
+      <div class="row">
+        <button class="btn main" id="s-save" type="button">Save</button>
+        <button class="btn" id="s-reset" type="button">Reset</button>
+        <button class="btn" id="s-close" type="button">Close</button>
+      </div>
+    </div>
   </div>
 
   <main class="views" id="views">
@@ -139,13 +187,6 @@
       <div class="mark" aria-hidden="true">&sum;</div>
       <h1>Proxy</h1>
       <p class="sub">Type a website or search.</p>
-      <div class="engine">
-        <label for="engine">Engine</label>
-        <select id="engine">
-          <option value="uv">Ultraviolet (in these tabs)</option>
-          <option value="sj">Scramjet (opens in a new browser tab)</option>
-        </select>
-      </div>
       <form id="homeform" autocomplete="off">
         <input id="homeinput" type="text" placeholder="Search or enter a website" aria-label="Search or enter a website" spellcheck="false">
         <button class="go" type="submit">Go</button>
@@ -262,7 +303,7 @@
 
     async function navigate(t, input) {
       errorEl.textContent = '';
-      var url = search(String(input).trim(), SEARCH);
+      var url = search(String(input).trim(), (settings && settings.search) || SEARCH);
       try {
         await ensureReady();
       } catch (err) {
@@ -417,20 +458,49 @@
     });
     $('newtab').addEventListener('click', function () { makeTab(); });
 
-    // ----- Engine picker: Ultraviolet runs in these tabs; Scramjet is its own server -----
-    var SJ_PORT = 8081; // must match the -p host port used for the scramjet-app container
-    var engineSel = $('engine');
-    try { engineSel.value = localStorage.getItem('proxy:engine') || 'uv'; } catch (e) {}
-    engineSel.addEventListener('change', function () {
-      try { localStorage.setItem('proxy:engine', engineSel.value); } catch (e) {}
-    });
+    // ----- Settings: engine (Ultraviolet in these tabs, or Scramjet), Scramjet address, search engine -----
+    var SJ_PORT = 8081; // host port of the scramjet-app container
+    var DEFAULTS = { engine: 'uv', scramjet: '', search: SEARCH };
+    var settings = Object.assign({}, DEFAULTS);
+    try { Object.assign(settings, JSON.parse(localStorage.getItem('proxy:settings') || '{}')); } catch (e) {}
+
+    function scramjetUrl() {
+      var v = (settings.scramjet || '').trim();
+      if (/^https?:\/\//i.test(v)) return v;
+      return location.protocol + '//' + location.hostname + ':' + SJ_PORT + '/';
+    }
     function go(value) {
-      if (engineSel.value === 'sj') {
-        window.open(location.protocol + '//' + location.hostname + ':' + SJ_PORT + '/', '_blank', 'noopener');
+      if (settings.engine === 'sj') {
+        window.open(scramjetUrl(), '_blank', 'noopener');
         return;
       }
       if (active) navigate(active, value);
     }
+
+    var sheet = $('sheet');
+    function openSettings() {
+      $('s-engine').value = settings.engine;
+      $('s-sj').value = settings.scramjet;
+      $('s-search').value = settings.search;
+      sheet.hidden = false;
+    }
+    function saveSettings() {
+      var sj = $('s-sj').value.trim();
+      if (sj && !/^https?:\/\//i.test(sj)) { alert('The Scramjet address must start with http:// or https://'); return; }
+      settings = { engine: $('s-engine').value, scramjet: sj, search: $('s-search').value };
+      try { localStorage.setItem('proxy:settings', JSON.stringify(settings)); } catch (e) {}
+      sheet.hidden = true;
+    }
+    $('gear').addEventListener('click', openSettings);
+    $('s-save').addEventListener('click', saveSettings);
+    $('s-close').addEventListener('click', function () { sheet.hidden = true; });
+    $('s-reset').addEventListener('click', function () {
+      settings = Object.assign({}, DEFAULTS);
+      try { localStorage.removeItem('proxy:settings'); } catch (e) {}
+      openSettings();
+    });
+    sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.hidden = true; });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sheet.hidden = true; });
 
     $('omni').addEventListener('submit', function (e) {
       e.preventDefault();

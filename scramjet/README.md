@@ -2,7 +2,7 @@
 
 [Scramjet](https://github.com/MercuryWorkshop/scramjet) is a newer web proxy from Mercury Workshop, and it's meant to handle more sites than Ultraviolet. It runs as its own server, so it's a **separate container on its own port** (8081). It can't share a container or a service worker with Ultraviolet.
 
-The **Proxy** start page has an engine picker: **Ultraviolet** (this page, port 8080) or **Scramjet** (port 8081). Choosing Scramjet opens its own page in a new browser tab.
+The proxy page's **Settings** (gear icon, top right) has the engine choice: **Ultraviolet** (opens in the page's tabs, port 8080) or **Scramjet** (port 8081, opens in a new browser tab). The same panel has the Scramjet address and the search engine.
 
 **Not tested here.** The build and the proxy haven't been run on the VM.
 
