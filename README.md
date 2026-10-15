@@ -26,7 +26,7 @@ The **Settings** button (bottom right) is built in `assets/extras.js`. Everythin
 - **Site name and accent color**.
 - **Panic key**: press a key to jump to a page you choose.
 - **about:blank launcher**: opens the site inside a blank tab.
-- **Web proxy addresses**: where the top-bar **Proxy** button opens. Ultraviolet defaults to `http://localhost:8080`. You can also set a Scramjet address (optional); if both are set, the button asks which one to open.
+- **Web proxy address**: where the top-bar **Proxy** button opens. It defaults to `http://localhost:8080`.
 - **My game links**: add a link to any game site and it appears in the library.
 - **Fern Proxy demo**: link to the in-browser masking simulation.
 
