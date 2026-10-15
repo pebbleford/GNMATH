@@ -11,7 +11,7 @@
     slides:    { label: 'Google Slides', title: 'Untitled presentation - Google Slides', icon: 'https://www.google.com/s2/favicons?domain=slides.google.com&sz=64' },
     wiki:      { label: 'Wikipedia', title: 'Wikipedia, the free encyclopedia', icon: 'https://www.google.com/s2/favicons?domain=wikipedia.org&sz=64' },
   };
-  const DEFAULTS = { preset: 'none', title: '', icon: '', siteName: '', accent: '', panicKey: '`', panicUrl: 'https://classroom.google.com', proxyUrl: 'http://localhost:8080' };
+  const DEFAULTS = { preset: 'none', title: '', icon: '', siteName: '', accent: '', panicKey: '`', panicUrl: 'https://classroom.google.com', proxyUrl: 'http://localhost:8080', scramUrl: '' };
 
   const load = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...DEFAULTS }; } };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch { /* storage blocked */ } };
@@ -123,8 +123,11 @@
     <input id="xt-accent" type="color" value="#b36bff">
 
     <h3>Web proxy</h3>
-    <label for="xt-proxy">Proxy address (opened by the Proxy button)</label>
+    <label for="xt-proxy">Ultraviolet proxy address (opened by the Proxy button)</label>
     <input id="xt-proxy" type="url" placeholder="http://localhost:8080" autocomplete="off">
+    <label for="xt-scram">Scramjet proxy address (optional)</label>
+    <input id="xt-scram" type="url" placeholder="http://localhost:8081" autocomplete="off">
+    <p class="xt-note">If both are set, the Proxy button asks which one to open.</p>
     <p class="xt-note">Run your own proxy and put its address here. See <a href="proxysetup.md">proxysetup.md</a> and the README.</p>
 
     <h3>Panic key</h3>
@@ -162,14 +165,14 @@
     Object.entries(PRESETS).forEach(([k, p]) => { const o = document.createElement('option'); o.value = k; o.textContent = p.label; sel.appendChild(o); });
     sel.value = cfg.preset; $('xt-title').value = cfg.title; $('xt-icon').value = cfg.icon;
     $('xt-name').value = cfg.siteName; $('xt-accent').value = /^#[0-9a-f]{6}$/i.test(cfg.accent) ? cfg.accent : '#b36bff';
-    $('xt-proxy').value = cfg.proxyUrl; $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
+    $('xt-proxy').value = cfg.proxyUrl; $('xt-scram').value = cfg.scramUrl; $('xt-pkey').value = cfg.panicKey; $('xt-purl').value = cfg.panicUrl;
   }
   const open = () => { fill(); renderLinks(); panel.hidden = false; };
   const close = () => { panel.hidden = true; };
   function commit() {
     cfg.preset = $('xt-preset').value; cfg.title = $('xt-title').value.trim(); cfg.icon = $('xt-icon').value.trim();
     cfg.siteName = $('xt-name').value.trim(); cfg.accent = $('xt-accent').value;
-    cfg.proxyUrl = $('xt-proxy').value.trim(); cfg.panicKey = $('xt-pkey').value; cfg.panicUrl = $('xt-purl').value.trim();
+    cfg.proxyUrl = $('xt-proxy').value.trim(); cfg.scramUrl = $('xt-scram').value.trim(); cfg.panicKey = $('xt-pkey').value; cfg.panicUrl = $('xt-purl').value.trim();
     save(); applyAll();
   }
   function applyAll() { applyCloak(); applySiteName(); applyAccent(); }
@@ -211,10 +214,35 @@
     pb.innerHTML = '<span>Proxy</span>';
     pb.querySelector('span').style.display = 'inline';
     pb.style.width = 'auto'; pb.style.padding = '0 14px';
+    // Small menu under the button, shown when a Scramjet address is set too.
+    const menu = document.createElement('div');
+    menu.hidden = true;
+    menu.style.cssText = 'position:fixed;z-index:65;min-width:190px;padding:6px;border-radius:14px;background:var(--bg-raise,#140d26);border:1px solid var(--line,#34255c);box-shadow:0 16px 40px -12px rgba(0,0,0,.8)';
+    const addItem = (label, url) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:10px;background:transparent;color:var(--text,#fff);font:600 14px var(--font,system-ui);cursor:pointer';
+      b.onmouseenter = () => { b.style.background = 'var(--surface-hi,#261a46)'; };
+      b.onmouseleave = () => { b.style.background = 'transparent'; };
+      b.onclick = () => { menu.hidden = true; window.open(url, '_blank', 'noopener'); };
+      menu.appendChild(b);
+    };
+    document.body.appendChild(menu);
+    document.addEventListener('click', (e) => { if (!menu.hidden && !pb.contains(e.target) && !menu.contains(e.target)) menu.hidden = true; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menu.hidden = true; });
+
     pb.onclick = () => {
-      const u = safeUrl(cfg.proxyUrl);
-      if (!u) { alert('Set your proxy address in Settings first.'); open(); return; }
-      window.open(u, '_blank', 'noopener');
+      const uv = safeUrl(cfg.proxyUrl), sj = safeUrl(cfg.scramUrl);
+      if (!uv && !sj) { alert('Set your proxy address in Settings first.'); open(); return; }
+      if (uv && !sj) { window.open(uv, '_blank', 'noopener'); return; }
+      if (sj && !uv) { window.open(sj, '_blank', 'noopener'); return; }
+      menu.replaceChildren();
+      addItem('Ultraviolet', uv);
+      addItem('Scramjet', sj);
+      const r = pb.getBoundingClientRect();
+      menu.style.top = (r.bottom + 6) + 'px';
+      menu.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+      menu.hidden = !menu.hidden;
     };
     bar.appendChild(pb);
   }
