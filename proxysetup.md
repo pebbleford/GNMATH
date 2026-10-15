@@ -248,6 +248,9 @@ Copy everything inside the code block below, exactly:
     .chip { background: rgba(27,18,51,.8); color: var(--text); border: 1px solid var(--line); border-radius: 999px;
             padding: 9px 16px; font-weight: 600; font-size: 14px; cursor: pointer; transition: transform .15s, border-color .15s, background .15s; }
     .chip:hover { background: var(--surface-hi); border-color: var(--accent-2); transform: translateY(-2px); }
+    .engine { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--dim); font-size: 14px; }
+    .engine select { background: rgba(27,18,51,.85); color: var(--text); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font: inherit; cursor: pointer; }
+    .engine select:focus { outline: none; border-color: var(--accent-2); }
     .error { color: var(--danger); min-height: 1.4em; margin: 18px 0 0; max-width: 660px; }
     .note { margin-top: 26px; font-size: 13px; color: var(--faint); max-width: 520px; }
     .note a { color: var(--dim); }
@@ -281,6 +284,13 @@ Copy everything inside the code block below, exactly:
       <div class="mark" aria-hidden="true">&sum;</div>
       <h1>Proxy</h1>
       <p class="sub">Type a website or search.</p>
+      <div class="engine">
+        <label for="engine">Engine</label>
+        <select id="engine">
+          <option value="uv">Ultraviolet (in these tabs)</option>
+          <option value="sj">Scramjet (opens in a new browser tab)</option>
+        </select>
+      </div>
       <form id="homeform" autocomplete="off">
         <input id="homeinput" type="text" placeholder="Search or enter a website" aria-label="Search or enter a website" spellcheck="false">
         <button class="go" type="submit">Go</button>
@@ -552,22 +562,37 @@ Copy everything inside the code block below, exactly:
     });
     $('newtab').addEventListener('click', function () { makeTab(); });
 
+    // ----- Engine picker: Ultraviolet runs in these tabs; Scramjet is its own server -----
+    var SJ_PORT = 8081; // must match the -p host port used for the scramjet-app container
+    var engineSel = $('engine');
+    try { engineSel.value = localStorage.getItem('proxy:engine') || 'uv'; } catch (e) {}
+    engineSel.addEventListener('change', function () {
+      try { localStorage.setItem('proxy:engine', engineSel.value); } catch (e) {}
+    });
+    function go(value) {
+      if (engineSel.value === 'sj') {
+        window.open(location.protocol + '//' + location.hostname + ':' + SJ_PORT + '/', '_blank', 'noopener');
+        return;
+      }
+      if (active) navigate(active, value);
+    }
+
     $('omni').addEventListener('submit', function (e) {
       e.preventDefault();
-      if (!address.value.trim() || !active) return;
+      if (!address.value.trim()) return;
       address.blur();
-      navigate(active, address.value);
+      go(address.value);
     });
     $('homeform').addEventListener('submit', function (e) {
       e.preventDefault();
       var v = $('homeinput').value.trim();
-      if (!v || !active) return;
+      if (!v) return;
       $('homeinput').value = '';
-      navigate(active, v);
+      go(v);
     });
     $('chips').addEventListener('click', function (e) {
       var b = e.target.closest('[data-go]');
-      if (b && active) navigate(active, b.getAttribute('data-go'));
+      if (b) go(b.getAttribute('data-go'));
     });
     address.addEventListener('focus', function () { address.select(); });
 
